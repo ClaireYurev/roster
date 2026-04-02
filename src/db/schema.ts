@@ -35,6 +35,13 @@ export type HardwareStatus = (typeof HardwareStatus)[keyof typeof HardwareStatus
 // employees — stable entity record; current* fields are denormalized state
 // ---------------------------------------------------------------------------
 
+export const WorkLocationType = {
+  REMOTE: 'REMOTE',
+  HYBRID: 'HYBRID',
+  ONSITE: 'ONSITE',
+} as const
+export type WorkLocationType = (typeof WorkLocationType)[keyof typeof WorkLocationType]
+
 export const employees = sqliteTable('employees', {
   id: text('id').primaryKey(), // UUID, generated in application layer
   currentName: text('current_name').notNull(),
@@ -48,6 +55,21 @@ export const employees = sqliteTable('employees', {
   isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
   mailingAddress: text('mailing_address'),
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+
+  // --- Profile fields (populated via browser extension / Freshservice import) ---
+  freshserviceId: text('freshservice_id'),      // HR system employee ID
+  workEmail: text('work_email'),
+  personalEmail: text('personal_email'),
+  workPhone: text('work_phone'),
+  mobilePhone: text('mobile_phone'),
+  workLocation: text('work_location'),          // office name / city
+  workLocationType: text('work_location_type', {
+    enum: ['REMOTE', 'HYBRID', 'ONSITE'],
+  }),
+  managerName: text('manager_name'),
+  costCenter: text('cost_center'),
+  jobBand: text('job_band'),                    // e.g. 'L4', 'Senior', 'IC3'
+  photoUrl: text('photo_url'),                  // base64 data URI or https URL
 })
 
 // ---------------------------------------------------------------------------
