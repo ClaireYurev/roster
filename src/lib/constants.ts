@@ -1,6 +1,6 @@
-import { LifecycleEventType, EmploymentType, HardwareStatus } from '@/db/schema'
+import { LifecycleEventType, EmploymentType, HardwareStatus, ImportSource } from '@/db/schema'
 
-export { LifecycleEventType, EmploymentType, HardwareStatus }
+export { LifecycleEventType, EmploymentType, HardwareStatus, ImportSource }
 
 export const LIFECYCLE_EVENT_LABELS: Record<string, string> = {
   ONBOARDED: 'Onboarded',
@@ -12,6 +12,7 @@ export const LIFECYCLE_EVENT_LABELS: Record<string, string> = {
   REHIRED: 'Rehired',
   HARDWARE_ASSIGNED: 'Hardware Assigned',
   HARDWARE_UNASSIGNED: 'Hardware Unassigned',
+  PROFILE_UPDATED: 'Profile Updated',
 }
 
 export const LIFECYCLE_EVENT_COLORS: Record<string, string> = {
@@ -24,6 +25,14 @@ export const LIFECYCLE_EVENT_COLORS: Record<string, string> = {
   REHIRED: 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200',
   HARDWARE_ASSIGNED: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
   HARDWARE_UNASSIGNED: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200',
+  PROFILE_UPDATED: 'bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-200',
+}
+
+export const IMPORT_SOURCE_LABELS: Record<string, string> = {
+  MANUAL: 'Manual',
+  BROWSER_EXTENSION: 'Browser Extension',
+  FRESHSERVICE_API: 'Freshservice',
+  BULK_IMPORT: 'Bulk Import',
 }
 
 export const EMPLOYMENT_TYPE_LABELS: Record<string, string> = {

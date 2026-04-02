@@ -21,8 +21,17 @@ export const LifecycleEventType = {
   REHIRED: 'REHIRED',
   HARDWARE_ASSIGNED: 'HARDWARE_ASSIGNED',
   HARDWARE_UNASSIGNED: 'HARDWARE_UNASSIGNED',
+  PROFILE_UPDATED: 'PROFILE_UPDATED',
 } as const
 export type LifecycleEventType = (typeof LifecycleEventType)[keyof typeof LifecycleEventType]
+
+export const ImportSource = {
+  MANUAL: 'MANUAL',
+  BROWSER_EXTENSION: 'BROWSER_EXTENSION',
+  FRESHSERVICE_API: 'FRESHSERVICE_API',
+  BULK_IMPORT: 'BULK_IMPORT',
+} as const
+export type ImportSource = (typeof ImportSource)[keyof typeof ImportSource]
 
 export const HardwareStatus = {
   UNASSIGNED: 'UNASSIGNED',
@@ -92,11 +101,16 @@ export const lifecycleEvents = sqliteTable('lifecycle_events', {
       'REHIRED',
       'HARDWARE_ASSIGNED',
       'HARDWARE_UNASSIGNED',
+      'PROFILE_UPDATED',
     ],
   }).notNull(),
   eventDate: integer('event_date', { mode: 'timestamp_ms' }).notNull(),
   payload: text('payload', { mode: 'json' }),
   notes: text('notes'),
+  // Source of the event: helps audit trail show where each change came from
+  source: text('source', {
+    enum: ['MANUAL', 'BROWSER_EXTENSION', 'FRESHSERVICE_API', 'BULK_IMPORT'],
+  }),
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
 })
 
