@@ -10,6 +10,8 @@ export const createEmployeeSchema = z.object({
   currentRole: z.string().min(1, 'Role is required').max(200),
   currentDepartment: z.string().min(1, 'Department is required').max(200),
   employmentType: z.enum(['CONTRACTOR', 'FTE']),
+  // Required for contractors, ignored for FTE
+  contractEndDate: z.string().refine((d) => !isNaN(Date.parse(d)), { message: 'Invalid date' }).optional(),
   mailingAddress: z.string().max(500).optional(),
   startDate: z.string().refine((d) => !isNaN(Date.parse(d)), { message: 'Invalid date' }),
   computerType: z.string().optional(),
@@ -58,6 +60,7 @@ export const rehireSchema = z.object({
   newRole: z.string().min(1, 'Role is required').max(200),
   newDepartment: z.string().min(1, 'Department is required').max(200),
   employmentType: z.enum(['CONTRACTOR', 'FTE']),
+  contractEndDate: z.string().refine((d) => !isNaN(Date.parse(d)), { message: 'Invalid date' }).optional(),
   eventDate: z.string().refine((d) => !isNaN(Date.parse(d)), { message: 'Invalid date' }),
   computerType: z.string().optional(),
   computerSize: z.string().optional(),

@@ -24,6 +24,7 @@ export type ProfileFields = {
   // if explicit legalFirstName/legalLastName are not provided
   currentName?: string
   currentRole?: string
+  contractEndDate?: string   // ISO date — required for CONTRACTOR type
   currentDepartment?: string
   employmentType?: 'FTE' | 'CONTRACTOR'
   freshserviceId?: string
@@ -93,6 +94,19 @@ export async function updateEmployeeProfile(
       ...incoming,
       legalFirstName: parts.slice(0, -1).join(' ') || parts[0],
       legalLastName: parts.length > 1 ? parts[parts.length - 1] : '',
+    }
+  }
+
+  // Handle contractEndDate separately (Date vs string)
+  if (incoming.contractEndDate) {
+    const newEndDate = new Date(incoming.contractEndDate)
+    const existingEndDate = existing.contractEndDate
+    if (!existingEndDate || Math.abs(newEndDate.getTime() - existingEndDate.getTime()) > 1000) {
+      diff['Contract End Date'] = {
+        from: existingEndDate ? existingEndDate.toISOString().split('T')[0] : null,
+        to: newEndDate.toISOString().split('T')[0],
+      }
+      ;(updates as Record<string, unknown>).contractEndDate = newEndDate
     }
   }
 
@@ -211,6 +225,7 @@ export async function findOrCreateEmployee(
       legalLastName: legalLast || null,
       preferredFirstName: incoming.preferredFirstName?.trim() ?? null,
       preferredLastName: incoming.preferredLastName?.trim() ?? null,
+      contractEndDate: incoming.contractEndDate ? new Date(incoming.contractEndDate) : null,
       currentRole: incoming.currentRole?.trim() ?? 'Unknown',
       currentDepartment: incoming.currentDepartment?.trim() ?? 'Unknown',
       employmentType: incoming.employmentType ?? 'FTE',
@@ -290,6 +305,7 @@ export async function createEmployee(input: z.infer<typeof createEmployeeSchema>
       legalLastName: data.legalLastName,
       preferredFirstName: data.preferredFirstName ?? null,
       preferredLastName: data.preferredLastName ?? null,
+      contractEndDate: data.contractEndDate ? new Date(data.contractEndDate) : null,
       currentRole: data.currentRole,
       currentDepartment: data.currentDepartment,
       employmentType: data.employmentType,
@@ -422,6 +438,7 @@ export async function rehireEmployee(input: z.infer<typeof rehireSchema>) {
         currentRole: data.newRole,
         currentDepartment: data.newDepartment,
         employmentType: data.employmentType,
+        contractEndDate: data.contractEndDate ? new Date(data.contractEndDate) : null,
       })
       .where(eq(employees.id, data.employeeId))
 

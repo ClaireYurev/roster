@@ -1,13 +1,14 @@
 import Link from 'next/link'
 import { auth, signOut } from '@/auth'
 import { ThemeToggle } from './theme-toggle'
-import { Users, CalendarDays, Monitor, Upload, LayoutDashboard, Terminal } from 'lucide-react'
+import { Users, CalendarDays, Monitor, Upload, LayoutDashboard, Terminal, ClipboardList } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 
 const navLinks = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/onboarding/weekly', label: 'Weekly', icon: CalendarDays },
+  { href: '/contractors', label: 'Contractors', icon: ClipboardList },
   { href: '/hardware', label: 'Hardware', icon: Monitor },
   { href: '/admin/import', label: 'Import', icon: Upload },
 ]

@@ -18,6 +18,8 @@ import {
   Wifi,
   WifiOff,
   Home,
+  CalendarX2,
+  AlertTriangle,
 } from 'lucide-react'
 
 const WORK_LOCATION_TYPE_LABELS: Record<string, string> = {
@@ -174,6 +176,32 @@ export function EmployeeSnapshot({
           {startDate && (
             <ProfileRow icon={Layers} label="Start date" value={formatDate(startDate)} />
           )}
+
+          {/* Contract end date — only shown for contractors */}
+          {employee.employmentType === 'CONTRACTOR' && employee.contractEndDate && (() => {
+            const end = employee.contractEndDate instanceof Date
+              ? employee.contractEndDate
+              : new Date(employee.contractEndDate)
+            const today = new Date(); today.setHours(0,0,0,0)
+            end.setHours(0,0,0,0)
+            const diff = Math.round((end.getTime() - today.getTime()) / 86400000)
+            const isUrgent = diff <= 14
+            const isExpired = diff < 0
+            return (
+              <div className={`flex items-start gap-2 text-sm col-span-2 ${isExpired ? 'text-red-600 dark:text-red-400' : isUrgent ? 'text-orange-600 dark:text-orange-400' : ''}`}>
+                {isExpired || isUrgent
+                  ? <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+                  : <CalendarX2 className="h-4 w-4 shrink-0 mt-0.5 text-muted-foreground" />
+                }
+                <div>
+                  <span className={isUrgent || isExpired ? '' : 'text-muted-foreground'}>Contract end: </span>
+                  <span className="font-medium">{formatDate(employee.contractEndDate)}</span>
+                  {isExpired && <span className="ml-1 font-semibold">(EXPIRED {Math.abs(diff)}d ago)</span>}
+                  {!isExpired && isUrgent && <span className="ml-1 font-semibold">(in {diff} day{diff !== 1 ? 's' : ''})</span>}
+                </div>
+              </div>
+            )
+          })()}
         </div>
 
         {/* Mailing address */}

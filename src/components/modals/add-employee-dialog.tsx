@@ -47,6 +47,32 @@ export function AddEmployeeDialog() {
     defaultValues: { employmentType: 'FTE', startDate: today },
   })
 
+  const employmentType = watch('employmentType')
+  const startDate = watch('startDate')
+  const isContractor = employmentType === 'CONTRACTOR'
+
+  // When switching to CONTRACTOR, auto-populate contract end date to +1 year from start date
+  function handleEmploymentTypeChange(value: string) {
+    setValue('employmentType', value as 'FTE' | 'CONTRACTOR')
+    if (value === 'CONTRACTOR' && startDate) {
+      const end = new Date(startDate)
+      end.setFullYear(end.getFullYear() + 1)
+      setValue('contractEndDate', end.toISOString().split('T')[0])
+    } else {
+      setValue('contractEndDate', undefined)
+    }
+  }
+
+  // When start date changes while contractor is selected, update end date too
+  function handleStartDateChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const val = e.target.value
+    if (isContractor && val) {
+      const end = new Date(val)
+      end.setFullYear(end.getFullYear() + 1)
+      setValue('contractEndDate', end.toISOString().split('T')[0])
+    }
+  }
+
   function onSubmit(data: CreateEmployeeInput) {
     startTransition(async () => {
       const result = await createEmployee(data)
@@ -121,7 +147,7 @@ export function AddEmployeeDialog() {
               <Label>Employment Type *</Label>
               <Select
                 defaultValue="FTE"
-                onValueChange={(v) => setValue('employmentType', v as 'FTE' | 'CONTRACTOR')}
+                onValueChange={handleEmploymentTypeChange}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -134,10 +160,39 @@ export function AddEmployeeDialog() {
             </div>
             <div className="space-y-1">
               <Label htmlFor="startDate">Start Date *</Label>
-              <Input id="startDate" type="date" {...register('startDate')} />
+              <Input
+                id="startDate"
+                type="date"
+                {...register('startDate')}
+                onChange={(e) => {
+                  register('startDate').onChange(e)
+                  handleStartDateChange(e)
+                }}
+              />
               {errors.startDate && <p className="text-xs text-destructive">{errors.startDate.message}</p>}
             </div>
           </div>
+
+          {/* Contract end date — shown only for contractors */}
+          {isContractor && (
+            <div className="rounded-md border border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-950/30 p-3 space-y-1">
+              <Label htmlFor="contractEndDate" className="text-orange-900 dark:text-orange-200">
+                Contract End Date *
+              </Label>
+              <Input
+                id="contractEndDate"
+                type="date"
+                {...register('contractEndDate')}
+                className="bg-white dark:bg-background"
+              />
+              <p className="text-xs text-orange-700 dark:text-orange-300">
+                Defaults to 1 year after start date. IT will be notified 2 weeks before this date.
+              </p>
+              {errors.contractEndDate && (
+                <p className="text-xs text-destructive">{errors.contractEndDate.message}</p>
+              )}
+            </div>
+          )}
 
           <div className="space-y-1">
             <Label htmlFor="mailingAddress">Mailing Address</Label>

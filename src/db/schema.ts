@@ -65,6 +65,9 @@ export const employees = sqliteTable('employees', {
   mailingAddress: text('mailing_address'),
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
 
+  // --- Contractor end date (required for CONTRACTOR type; null for FTE) ---
+  contractEndDate: integer('contract_end_date', { mode: 'timestamp_ms' }),
+
   // --- Legal name (required) + preferred name (optional, shown everywhere by default) ---
   legalFirstName: text('legal_first_name'),
   legalLastName: text('legal_last_name'),
