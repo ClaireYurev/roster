@@ -1,16 +1,18 @@
 'use server'
 
 import { db } from '@/db'
-import { employees, lifecycleEvents, onboardingChecklists } from '@/db/schema'
-import { eq, and, or, gte, lte } from 'drizzle-orm'
+import { employees, lifecycleEvents, onboardingChecklists, loaRecords } from '@/db/schema'
+import { eq, and, or, gte, lte, desc, isNull } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 import {
   nameChangeSchema,
   roleChangeSchema,
   convertToFteSchema,
   separationSchema,
+  loaStartSchema,
+  loaEndSchema,
 } from '@/lib/validators'
-import type { WeeklyOnboarding } from '@/types'
+import type { WeeklyOnboarding, LoaRecord } from '@/types'
 import { getNextMondayAndWednesday, computeDisplayName } from '@/lib/utils'
 import type { z } from 'zod'
 
@@ -134,25 +136,157 @@ export async function logSeparation(input: z.infer<typeof separationSchema>) {
 
   const { employeeId, eventType, eventDate, notes } = parsed.data
   const now = new Date()
+  // RESIGNED → voluntary; TERMINATED → involuntary
+  const newStatus = eventType === 'RESIGNED' ? 'DISABLED_VOLUNTARY' : 'DISABLED_INVOLUNTARY'
+
+  const emp = await db.query.employees.findFirst({ where: eq(employees.id, employeeId) })
+  if (!emp) return { error: 'Employee not found' }
 
   await db.transaction(async (tx) => {
     await tx.insert(lifecycleEvents).values({
       employeeId,
       eventType,
       eventDate: new Date(eventDate),
-      payload: null,
+      payload: { employmentTypeAtSeparation: emp.employmentType } as unknown as null,
       notes: notes ?? null,
+      source: 'MANUAL',
       createdAt: now,
     })
     await tx
       .update(employees)
-      .set({ isActive: false })
+      .set({ isActive: false, status: newStatus, contractEndDate: null })
       .where(eq(employees.id, employeeId))
+  })
+
+  revalidatePath('/dashboard')
+  revalidatePath('/contractors')
+  revalidatePath(`/employees/${employeeId}`)
+  return { success: true, requiresServiceNowTicket: emp.employmentType === 'CONTRACTOR' }
+}
+
+// ---------------------------------------------------------------------------
+// logLOAStart — sets status=LOA, creates loa_record with IT checklist
+// ---------------------------------------------------------------------------
+export async function logLOAStart(input: z.infer<typeof loaStartSchema>) {
+  const parsed = loaStartSchema.safeParse(input)
+  if (!parsed.success) return { error: parsed.error.flatten().fieldErrors }
+
+  const { employeeId, eventDate, expectedEndDate, pcEndDateConfirmed, jumpcloudSuspended, notes } = parsed.data
+  const now = new Date()
+
+  const emp = await db.query.employees.findFirst({ where: eq(employees.id, employeeId) })
+  if (!emp) return { error: 'Employee not found' }
+  if (emp.status !== 'ACTIVE') return { error: 'Employee must be Active to start LOA' }
+
+  let loaRecordId: number | undefined
+
+  await db.transaction(async (tx) => {
+    const [event] = await tx.insert(lifecycleEvents).values({
+      employeeId,
+      eventType: 'LOA_START',
+      eventDate: new Date(eventDate),
+      payload: { expectedEndDate } as unknown as null,
+      notes: notes ?? null,
+      source: 'MANUAL',
+      createdAt: now,
+    }).returning({ id: lifecycleEvents.id })
+
+    const [record] = await tx.insert(loaRecords).values({
+      lifecycleEventId: event.id,
+      expectedEndDate: new Date(expectedEndDate),
+      pcEndDateConfirmed,
+      jumpcloudSuspended,
+      jumpcloudActivated: false,
+      actualEndDate: null,
+      notes: notes ?? null,
+      createdAt: now,
+      updatedAt: now,
+    }).returning({ id: loaRecords.id })
+
+    loaRecordId = record.id
+
+    // Azure stays active — isActive stays true; status = LOA
+    await tx.update(employees).set({ status: 'LOA' }).where(eq(employees.id, employeeId))
+  })
+
+  revalidatePath('/dashboard')
+  revalidatePath(`/employees/${employeeId}`)
+  return { success: true, loaRecordId }
+}
+
+// ---------------------------------------------------------------------------
+// updateLOAChecklist — allows IT to tick off JumpCloud suspended/activated
+// ---------------------------------------------------------------------------
+export async function updateLOAChecklist(
+  loaRecordId: number,
+  updates: { pcEndDateConfirmed?: boolean; jumpcloudSuspended?: boolean; jumpcloudActivated?: boolean }
+) {
+  const now = new Date()
+  await db.update(loaRecords).set({ ...updates, updatedAt: now }).where(eq(loaRecords.id, loaRecordId))
+  return { success: true }
+}
+
+// ---------------------------------------------------------------------------
+// logLOAReturn — ends LOA, sets status=ACTIVE, marks JumpCloud activated
+// ---------------------------------------------------------------------------
+export async function logLOAReturn(input: z.infer<typeof loaEndSchema>) {
+  const parsed = loaEndSchema.safeParse(input)
+  if (!parsed.success) return { error: parsed.error.flatten().fieldErrors }
+
+  const { employeeId, loaRecordId, eventDate, jumpcloudActivated, notes } = parsed.data
+  const now = new Date()
+
+  const emp = await db.query.employees.findFirst({ where: eq(employees.id, employeeId) })
+  if (!emp) return { error: 'Employee not found' }
+  if (emp.status !== 'LOA') return { error: 'Employee is not currently on LOA' }
+
+  await db.transaction(async (tx) => {
+    await tx.insert(lifecycleEvents).values({
+      employeeId,
+      eventType: 'LOA_END',
+      eventDate: new Date(eventDate),
+      payload: null,
+      notes: notes ?? null,
+      source: 'MANUAL',
+      createdAt: now,
+    })
+
+    await tx.update(loaRecords).set({
+      jumpcloudActivated,
+      actualEndDate: new Date(eventDate),
+      updatedAt: now,
+    }).where(eq(loaRecords.id, loaRecordId))
+
+    await tx.update(employees).set({ status: 'ACTIVE', isActive: true }).where(eq(employees.id, employeeId))
   })
 
   revalidatePath('/dashboard')
   revalidatePath(`/employees/${employeeId}`)
   return { success: true }
+}
+
+// ---------------------------------------------------------------------------
+// getActiveLOARecord — returns the open loa_record for an employee on LOA
+// ---------------------------------------------------------------------------
+export async function getActiveLOARecord(employeeId: string): Promise<LoaRecord | null> {
+  // Find most recent LOA_START event for this employee
+  const loaStartEvent = await db.query.lifecycleEvents.findFirst({
+    where: and(
+      eq(lifecycleEvents.employeeId, employeeId),
+      eq(lifecycleEvents.eventType, 'LOA_START')
+    ),
+    orderBy: [desc(lifecycleEvents.eventDate)],
+  })
+  if (!loaStartEvent) return null
+
+  const record = await db.query.loaRecords.findFirst({
+    where: and(
+      eq(loaRecords.lifecycleEventId, loaStartEvent.id),
+      isNull(loaRecords.actualEndDate)
+    ),
+  }) ?? null
+
+  return record
 }
 
 // ---------------------------------------------------------------------------

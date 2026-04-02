@@ -102,6 +102,30 @@ export function AddEmployeeDialog() {
           <DialogTitle>Add New Employee</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          {/* Hire context — shown for FTE only */}
+          {!isContractor && (
+            <div className="space-y-1">
+              <Label>Hire Context *</Label>
+              <Select
+                defaultValue="NEW_FTE"
+                onValueChange={(v) => setValue('hireContext', v as CreateEmployeeInput['hireContext'])}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="NEW_FTE">New FTE — first time at Liquid IV</SelectItem>
+                  <SelectItem value="UL_TRANSFER">UL → LIV FTE (Unilever transfer)</SelectItem>
+                  <SelectItem value="PAST_FTE_REHIRED">Past LIV FTE rehired as FTE</SelectItem>
+                  <SelectItem value="PAST_CONTRACTOR_AS_FTE">Past LIV Contractor rehired as FTE</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Recorded in the employee history for audit purposes.
+              </p>
+            </div>
+          )}
+
           {/* Legal name */}
           <div>
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Legal Name (HR / Payroll)</p>

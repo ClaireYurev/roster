@@ -1,6 +1,6 @@
-import { LifecycleEventType, EmploymentType, HardwareStatus, ImportSource } from '@/db/schema'
+import { LifecycleEventType, EmploymentType, HardwareStatus, ImportSource, EmployeeStatus, HireContext } from '@/db/schema'
 
-export { LifecycleEventType, EmploymentType, HardwareStatus, ImportSource }
+export { LifecycleEventType, EmploymentType, HardwareStatus, ImportSource, EmployeeStatus, HireContext }
 
 export const LIFECYCLE_EVENT_LABELS: Record<string, string> = {
   ONBOARDED: 'Onboarded',
@@ -13,6 +13,8 @@ export const LIFECYCLE_EVENT_LABELS: Record<string, string> = {
   HARDWARE_ASSIGNED: 'Hardware Assigned',
   HARDWARE_UNASSIGNED: 'Hardware Unassigned',
   PROFILE_UPDATED: 'Profile Updated',
+  LOA_START: 'LOA Started',
+  LOA_END: 'Returned from LOA',
 }
 
 export const LIFECYCLE_EVENT_COLORS: Record<string, string> = {
@@ -26,6 +28,8 @@ export const LIFECYCLE_EVENT_COLORS: Record<string, string> = {
   HARDWARE_ASSIGNED: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
   HARDWARE_UNASSIGNED: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200',
   PROFILE_UPDATED: 'bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-200',
+  LOA_START: 'bg-violet-100 text-violet-800 dark:bg-violet-900 dark:text-violet-200',
+  LOA_END: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200',
 }
 
 export const IMPORT_SOURCE_LABELS: Record<string, string> = {
@@ -33,6 +37,29 @@ export const IMPORT_SOURCE_LABELS: Record<string, string> = {
   BROWSER_EXTENSION: 'Browser Extension',
   FRESHSERVICE_API: 'Freshservice',
   BULK_IMPORT: 'Bulk Import',
+}
+
+export const EMPLOYEE_STATUS_LABELS: Record<string, string> = {
+  ACTIVE: 'Active',
+  LOA: 'On LOA',
+  DISABLED_VOLUNTARY: 'Disabled — Voluntary',
+  DISABLED_INVOLUNTARY: 'Disabled — Involuntary',
+}
+
+export const EMPLOYEE_STATUS_COLORS: Record<string, string> = {
+  ACTIVE: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+  LOA: 'bg-violet-100 text-violet-800 dark:bg-violet-900 dark:text-violet-200',
+  DISABLED_VOLUNTARY: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+  DISABLED_INVOLUNTARY: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+}
+
+export const HIRE_CONTEXT_LABELS: Record<string, string> = {
+  NEW_FTE: 'New FTE — first time at Liquid IV',
+  UL_TRANSFER: 'UL → LIV FTE (Unilever transfer)',
+  CONTRACTOR_TO_FTE: 'LIV Contractor → FTE (immediate)',
+  PAST_CONTRACTOR_AS_FTE: 'Past LIV Contractor rehired as FTE',
+  PAST_FTE_REHIRED: 'Past LIV FTE rehired as FTE',
+  NEW_CONTRACTOR: 'New Contractor',
 }
 
 export const EMPLOYMENT_TYPE_LABELS: Record<string, string> = {

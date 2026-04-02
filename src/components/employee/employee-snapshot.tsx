@@ -1,6 +1,6 @@
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { EMPLOYMENT_TYPE_LABELS } from '@/lib/constants'
+import { EMPLOYMENT_TYPE_LABELS, EMPLOYEE_STATUS_LABELS, EMPLOYEE_STATUS_COLORS } from '@/lib/constants'
 import { formatDate } from '@/lib/utils'
 import type { Employee } from '@/types'
 import {
@@ -20,6 +20,7 @@ import {
   Home,
   CalendarX2,
   AlertTriangle,
+  PauseCircle,
 } from 'lucide-react'
 
 const WORK_LOCATION_TYPE_LABELS: Record<string, string> = {
@@ -99,19 +100,12 @@ export function EmployeeSnapshot({
                 )}
               </div>
               <div className="flex flex-wrap gap-2 justify-end shrink-0">
-                <Badge variant={employee.isActive ? 'default' : 'secondary'}>
-                  {employee.isActive ? (
-                    <span className="flex items-center gap-1">
-                      <UserCheck className="h-3 w-3" />
-                      Active
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-1">
-                      <UserX className="h-3 w-3" />
-                      Inactive
-                    </span>
-                  )}
-                </Badge>
+                <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${EMPLOYEE_STATUS_COLORS[employee.status] ?? 'bg-gray-100 text-gray-800'}`}>
+                  {employee.status === 'ACTIVE' && <UserCheck className="h-3 w-3" />}
+                  {employee.status === 'LOA' && <PauseCircle className="h-3 w-3" />}
+                  {(employee.status === 'DISABLED_VOLUNTARY' || employee.status === 'DISABLED_INVOLUNTARY') && <UserX className="h-3 w-3" />}
+                  {EMPLOYEE_STATUS_LABELS[employee.status] ?? employee.status}
+                </span>
                 <Badge variant="outline">
                   {EMPLOYMENT_TYPE_LABELS[employee.employmentType] ?? employee.employmentType}
                 </Badge>

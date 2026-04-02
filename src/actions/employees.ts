@@ -320,8 +320,9 @@ export async function createEmployee(input: z.infer<typeof createEmployeeSchema>
         employeeId: id,
         eventType: 'ONBOARDED',
         eventDate: startDate,
-        payload: null,
+        payload: { hireContext: data.hireContext ?? (data.employmentType === 'CONTRACTOR' ? 'NEW_CONTRACTOR' : 'NEW_FTE') } as unknown as null,
         notes: data.notes ?? null,
+        source: 'MANUAL',
         createdAt: now,
       })
       .returning({ id: lifecycleEvents.id })
@@ -435,6 +436,7 @@ export async function rehireEmployee(input: z.infer<typeof rehireSchema>) {
       .update(employees)
       .set({
         isActive: true,
+        status: 'ACTIVE',
         currentRole: data.newRole,
         currentDepartment: data.newDepartment,
         employmentType: data.employmentType,
@@ -448,8 +450,13 @@ export async function rehireEmployee(input: z.infer<typeof rehireSchema>) {
         employeeId: data.employeeId,
         eventType: 'REHIRED',
         eventDate: new Date(data.eventDate),
-        payload: { newRole: data.newRole, newDepartment: data.newDepartment } as unknown as null,
+        payload: {
+          newRole: data.newRole,
+          newDepartment: data.newDepartment,
+          hireContext: data.hireContext ?? (data.employmentType === 'CONTRACTOR' ? 'NEW_CONTRACTOR' : 'PAST_FTE_REHIRED'),
+        } as unknown as null,
         notes: data.notes ?? null,
+        source: 'MANUAL',
         createdAt: now,
       })
       .returning({ id: lifecycleEvents.id })

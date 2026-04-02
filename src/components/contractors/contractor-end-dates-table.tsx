@@ -18,7 +18,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import Link from 'next/link'
@@ -164,13 +163,28 @@ const columns: ColumnDef<ContractorWithStatus>[] = [
     },
   },
   {
-    accessorKey: 'isActive',
-    header: 'Active',
-    cell: ({ row }) => (
-      <Badge variant={row.original.isActive ? 'outline' : 'secondary'}>
-        {row.original.isActive ? 'Active' : 'Inactive'}
-      </Badge>
-    ),
+    accessorKey: 'status',
+    header: 'Emp. Status',
+    cell: ({ row }) => {
+      const status = row.original.status
+      const colorMap: Record<string, string> = {
+        ACTIVE: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+        LOA: 'bg-violet-100 text-violet-800 dark:bg-violet-900 dark:text-violet-200',
+        DISABLED_VOLUNTARY: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+        DISABLED_INVOLUNTARY: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+      }
+      const labelMap: Record<string, string> = {
+        ACTIVE: 'Active',
+        LOA: 'On LOA',
+        DISABLED_VOLUNTARY: 'Disabled',
+        DISABLED_INVOLUNTARY: 'Terminated',
+      }
+      return (
+        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${colorMap[status] ?? 'bg-gray-100 text-gray-800'}`}>
+          {labelMap[status] ?? status}
+        </span>
+      )
+    },
   },
 ]
 

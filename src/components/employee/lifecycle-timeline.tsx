@@ -1,6 +1,6 @@
 import { EventBadge } from './event-badge'
 import { formatDate } from '@/lib/utils'
-import { IMPORT_SOURCE_LABELS } from '@/lib/constants'
+import { IMPORT_SOURCE_LABELS, HIRE_CONTEXT_LABELS } from '@/lib/constants'
 import type { LifecycleEvent, OnboardingChecklist } from '@/types'
 
 type EventWithChecklist = LifecycleEvent & { checklist: OnboardingChecklist | null }
@@ -20,8 +20,22 @@ function formatPayload(eventType: string, payload: unknown): React.ReactNode | n
         : <span>{rp.oldRole} → {rp.newRole}</span>
     }
 
+    case 'ONBOARDED':
+    case 'REHIRED': {
+      const ctx = p.hireContext as string | undefined
+      return ctx ? <span>{HIRE_CONTEXT_LABELS[ctx] ?? ctx}</span> : null
+    }
+
     case 'CONVERTED_TO_FTE':
       return <span>From {String(p.previousType)}</span>
+
+    case 'LOA_START': {
+      const expectedEnd = p.expectedEndDate
+      return expectedEnd ? <span>Expected return: {new Date(expectedEnd as string).toLocaleDateString()}</span> : null
+    }
+
+    case 'LOA_END':
+      return null
 
     case 'HARDWARE_ASSIGNED':
     case 'HARDWARE_UNASSIGNED':

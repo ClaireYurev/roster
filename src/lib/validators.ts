@@ -10,6 +10,11 @@ export const createEmployeeSchema = z.object({
   currentRole: z.string().min(1, 'Role is required').max(200),
   currentDepartment: z.string().min(1, 'Department is required').max(200),
   employmentType: z.enum(['CONTRACTOR', 'FTE']),
+  // Hire context — records the history/scenario for this onboarding
+  hireContext: z.enum([
+    'NEW_FTE', 'UL_TRANSFER', 'CONTRACTOR_TO_FTE',
+    'PAST_CONTRACTOR_AS_FTE', 'PAST_FTE_REHIRED', 'NEW_CONTRACTOR',
+  ]).optional(),
   // Required for contractors, ignored for FTE
   contractEndDate: z.string().refine((d) => !isNaN(Date.parse(d)), { message: 'Invalid date' }).optional(),
   mailingAddress: z.string().max(500).optional(),
@@ -60,6 +65,10 @@ export const rehireSchema = z.object({
   newRole: z.string().min(1, 'Role is required').max(200),
   newDepartment: z.string().min(1, 'Department is required').max(200),
   employmentType: z.enum(['CONTRACTOR', 'FTE']),
+  hireContext: z.enum([
+    'NEW_FTE', 'UL_TRANSFER', 'CONTRACTOR_TO_FTE',
+    'PAST_CONTRACTOR_AS_FTE', 'PAST_FTE_REHIRED', 'NEW_CONTRACTOR',
+  ]).optional(),
   contractEndDate: z.string().refine((d) => !isNaN(Date.parse(d)), { message: 'Invalid date' }).optional(),
   eventDate: z.string().refine((d) => !isNaN(Date.parse(d)), { message: 'Invalid date' }),
   computerType: z.string().optional(),
@@ -67,6 +76,27 @@ export const rehireSchema = z.object({
   notes: z.string().optional(),
 })
 export type RehireInput = z.infer<typeof rehireSchema>
+
+const isoDate = (d: string) => !isNaN(Date.parse(d))
+
+export const loaStartSchema = z.object({
+  employeeId: z.string().uuid(),
+  eventDate: z.string().refine(isoDate, { message: 'Invalid date' }),
+  expectedEndDate: z.string().refine(isoDate, { message: 'Invalid date' }),
+  pcEndDateConfirmed: z.boolean(),
+  jumpcloudSuspended: z.boolean(),
+  notes: z.string().optional(),
+})
+export type LOAStartInput = z.infer<typeof loaStartSchema>
+
+export const loaEndSchema = z.object({
+  employeeId: z.string().uuid(),
+  loaRecordId: z.number().int().positive(),
+  eventDate: z.string().refine(isoDate, { message: 'Invalid date' }),
+  jumpcloudActivated: z.boolean(),
+  notes: z.string().optional(),
+})
+export type LOAEndInput = z.infer<typeof loaEndSchema>
 
 export const upsertChecklistSchema = z.object({
   lifecycleEventId: z.number().int().positive(),

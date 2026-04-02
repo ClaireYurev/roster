@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { formatDate } from '@/lib/utils'
-import { EMPLOYMENT_TYPE_LABELS } from '@/lib/constants'
+import { EMPLOYMENT_TYPE_LABELS, EMPLOYEE_STATUS_LABELS, EMPLOYEE_STATUS_COLORS } from '@/lib/constants'
 import { ArrowUpDown } from 'lucide-react'
 
 function ITStatus({ checklist }: { checklist: EmployeeWithLatestChecklist['latestChecklist'] }) {
@@ -58,14 +58,17 @@ export const columns: ColumnDef<EmployeeWithLatestChecklist>[] = [
     filterFn: (row, id, value) => value.includes(row.getValue(id)),
   },
   {
-    accessorKey: 'isActive',
+    accessorKey: 'status',
     header: 'Status',
-    cell: ({ row }) => (
-      <Badge variant={row.original.isActive ? 'outline' : 'secondary'}>
-        {row.original.isActive ? 'Active' : 'Inactive'}
-      </Badge>
-    ),
-    filterFn: (row, id, value) => value.includes(String(row.getValue(id))),
+    cell: ({ row }) => {
+      const status = row.original.status ?? (row.original.isActive ? 'ACTIVE' : 'DISABLED_VOLUNTARY')
+      return (
+        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${EMPLOYEE_STATUS_COLORS[status] ?? 'bg-gray-100 text-gray-800'}`}>
+          {EMPLOYEE_STATUS_LABELS[status] ?? status}
+        </span>
+      )
+    },
+    filterFn: (row, id, value) => value.includes(row.getValue(id)),
   },
   {
     accessorKey: 'createdAt',

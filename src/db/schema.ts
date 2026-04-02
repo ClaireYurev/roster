@@ -11,6 +11,24 @@ export const EmploymentType = {
 } as const
 export type EmploymentType = (typeof EmploymentType)[keyof typeof EmploymentType]
 
+export const EmployeeStatus = {
+  ACTIVE: 'ACTIVE',
+  LOA: 'LOA',                           // Leave of Absence (still employed, Azure stays active)
+  DISABLED_VOLUNTARY: 'DISABLED_VOLUNTARY',
+  DISABLED_INVOLUNTARY: 'DISABLED_INVOLUNTARY',
+} as const
+export type EmployeeStatus = (typeof EmployeeStatus)[keyof typeof EmployeeStatus]
+
+export const HireContext = {
+  NEW_FTE: 'NEW_FTE',                           // Brand new, no prior LIV or UL history
+  UL_TRANSFER: 'UL_TRANSFER',                   // Coming from Unilever (contractor or FTE)
+  CONTRACTOR_TO_FTE: 'CONTRACTOR_TO_FTE',       // Active LIV contractor → immediate FTE (CONVERTED_TO_FTE event)
+  PAST_CONTRACTOR_AS_FTE: 'PAST_CONTRACTOR_AS_FTE', // Was LIV contractor in past, now rehired as FTE
+  PAST_FTE_REHIRED: 'PAST_FTE_REHIRED',         // Was LIV FTE in past, now rehired as FTE
+  NEW_CONTRACTOR: 'NEW_CONTRACTOR',             // Standard new contractor hire
+} as const
+export type HireContext = (typeof HireContext)[keyof typeof HireContext]
+
 export const LifecycleEventType = {
   ONBOARDED: 'ONBOARDED',
   NAME_CHANGE: 'NAME_CHANGE',
@@ -22,6 +40,8 @@ export const LifecycleEventType = {
   HARDWARE_ASSIGNED: 'HARDWARE_ASSIGNED',
   HARDWARE_UNASSIGNED: 'HARDWARE_UNASSIGNED',
   PROFILE_UPDATED: 'PROFILE_UPDATED',
+  LOA_START: 'LOA_START',
+  LOA_END: 'LOA_END',
 } as const
 export type LifecycleEventType = (typeof LifecycleEventType)[keyof typeof LifecycleEventType]
 
@@ -62,6 +82,10 @@ export const employees = sqliteTable('employees', {
     .notNull()
     .default('FTE'),
   isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
+  // Richer status — kept in sync with isActive (isActive = status IN ('ACTIVE','LOA'))
+  status: text('status', {
+    enum: ['ACTIVE', 'LOA', 'DISABLED_VOLUNTARY', 'DISABLED_INVOLUNTARY'],
+  }).notNull().default('ACTIVE'),
   mailingAddress: text('mailing_address'),
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
 
@@ -111,6 +135,8 @@ export const lifecycleEvents = sqliteTable('lifecycle_events', {
       'HARDWARE_ASSIGNED',
       'HARDWARE_UNASSIGNED',
       'PROFILE_UPDATED',
+      'LOA_START',
+      'LOA_END',
     ],
   }).notNull(),
   eventDate: integer('event_date', { mode: 'timestamp_ms' }).notNull(),
@@ -140,6 +166,28 @@ export const onboardingChecklists = sqliteTable('onboarding_checklists', {
   computerSize: text('computer_size'),
   peripheralsNotes: text('peripherals_notes'),
   additionalNotes: text('additional_notes'),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+})
+
+// ---------------------------------------------------------------------------
+// loa_records — one per LOA_START lifecycle event; tracks IT checklist + end date
+// ---------------------------------------------------------------------------
+
+export const loaRecords = sqliteTable('loa_records', {
+  id: integer('id', { mode: 'number' }).primaryKey({ autoIncrement: true }),
+  lifecycleEventId: integer('lifecycle_event_id')
+    .notNull()
+    .references(() => lifecycleEvents.id),
+  // Confirmed with P&C
+  expectedEndDate: integer('expected_end_date', { mode: 'timestamp_ms' }),
+  pcEndDateConfirmed: integer('pc_end_date_confirmed', { mode: 'boolean' }).notNull().default(false),
+  // IT action: JumpCloud must be suspended on LOA start
+  jumpcloudSuspended: integer('jumpcloud_suspended', { mode: 'boolean' }).notNull().default(false),
+  // IT action: JumpCloud must be re-activated on LOA return
+  jumpcloudActivated: integer('jumpcloud_activated', { mode: 'boolean' }).notNull().default(false),
+  actualEndDate: integer('actual_end_date', { mode: 'timestamp_ms' }),
+  notes: text('notes'),
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
 })
@@ -190,6 +238,13 @@ export const lifecycleEventsRelations = relations(lifecycleEvents, ({ one }) => 
 export const onboardingChecklistsRelations = relations(onboardingChecklists, ({ one }) => ({
   lifecycleEvent: one(lifecycleEvents, {
     fields: [onboardingChecklists.lifecycleEventId],
+    references: [lifecycleEvents.id],
+  }),
+}))
+
+export const loaRecordsRelations = relations(loaRecords, ({ one }) => ({
+  lifecycleEvent: one(lifecycleEvents, {
+    fields: [loaRecords.lifecycleEventId],
     references: [lifecycleEvents.id],
   }),
 }))

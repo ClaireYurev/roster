@@ -5,6 +5,7 @@ import { OnboardingChecklistCard } from '@/components/employee/onboarding-checkl
 import { LifecycleTimeline } from '@/components/employee/lifecycle-timeline'
 import { LogEventDialog } from '@/components/modals/log-event-dialog'
 import { getEmployee } from '@/actions/employees'
+import { getActiveLOARecord } from '@/actions/lifecycle'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatDate, formatCents } from '@/lib/utils'
 import { Monitor, ArrowLeft } from 'lucide-react'
@@ -13,7 +14,10 @@ import Link from 'next/link'
 export const dynamic = 'force-dynamic'
 
 export default async function EmployeePage({ params }: { params: { id: string } }) {
-  const employee = await getEmployee(params.id)
+  const [employee, loaRecord] = await Promise.all([
+    getEmployee(params.id),
+    getActiveLOARecord(params.id),
+  ])
   if (!employee) notFound()
 
   // Find the most recent ONBOARDED/REHIRED event and its checklist
@@ -36,7 +40,7 @@ export default async function EmployeePage({ params }: { params: { id: string } 
           </Link>
           <h1 className="text-lg font-semibold truncate">{employee.currentName}</h1>
           <div className="ml-auto">
-            <LogEventDialog employee={employee} />
+            <LogEventDialog employee={employee} loaRecord={loaRecord} />
           </div>
         </div>
 

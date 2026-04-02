@@ -1,4 +1,4 @@
-import type { employees, lifecycleEvents, onboardingChecklists, hardwareAssets } from '@/db/schema'
+import type { employees, lifecycleEvents, onboardingChecklists, hardwareAssets, loaRecords } from '@/db/schema'
 
 // Inferred row types from Drizzle schema
 export type Employee = typeof employees.$inferSelect
@@ -12,6 +12,8 @@ export type NewOnboardingChecklist = typeof onboardingChecklists.$inferInsert
 
 export type HardwareAsset = typeof hardwareAssets.$inferSelect
 export type NewHardwareAsset = typeof hardwareAssets.$inferInsert
+
+export type LoaRecord = typeof loaRecords.$inferSelect
 
 // Payload types for lifecycle events
 export type NameChangePayload = { oldName: string; newName: string }
