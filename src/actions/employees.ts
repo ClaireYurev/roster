@@ -6,6 +6,7 @@ import type { ImportSource } from '@/db/schema'
 import { eq, desc, and, or } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 import { createEmployeeSchema, rehireSchema, importRowSchema } from '@/lib/validators'
+import { computeDisplayName } from '@/lib/utils'
 import type { EmployeeWithLatestChecklist, EmployeeWithFullHistory, ImportRowValidated } from '@/types'
 import type { z } from 'zod'
 
@@ -13,6 +14,14 @@ import type { z } from 'zod'
 // ProfileFields — shape used by all 3 import/update pathways
 // ---------------------------------------------------------------------------
 export type ProfileFields = {
+  // Legal name (used for HR/payroll)
+  legalFirstName?: string
+  legalLastName?: string
+  // Preferred name (shown in all views; falls back to legal name if blank)
+  preferredFirstName?: string
+  preferredLastName?: string
+  // Legacy / convenience: a single full name string; parsed into legal first+last
+  // if explicit legalFirstName/legalLastName are not provided
   currentName?: string
   currentRole?: string
   currentDepartment?: string
@@ -35,7 +44,10 @@ export type ProfileFields = {
 
 // Field display names for diff payload (human-readable in timeline)
 const FIELD_LABELS: Record<string, string> = {
-  currentName: 'Name',
+  legalFirstName: 'Legal First Name',
+  legalLastName: 'Legal Last Name',
+  preferredFirstName: 'Preferred First Name',
+  preferredLastName: 'Preferred Last Name',
   currentRole: 'Job Title',
   currentDepartment: 'Department',
   employmentType: 'Employment Type',
@@ -74,8 +86,19 @@ export async function updateEmployeeProfile(
   const diff: Record<string, DiffEntry> = {}
   const updates: Partial<typeof existing> = {}
 
+  // If incoming has a bare currentName but no explicit legal fields, split it
+  if (incoming.currentName && !incoming.legalFirstName && !incoming.legalLastName) {
+    const parts = incoming.currentName.trim().split(/\s+/)
+    incoming = {
+      ...incoming,
+      legalFirstName: parts.slice(0, -1).join(' ') || parts[0],
+      legalLastName: parts.length > 1 ? parts[parts.length - 1] : '',
+    }
+  }
+
   const profileKeys = [
-    'currentName', 'currentRole', 'currentDepartment', 'employmentType',
+    'legalFirstName', 'legalLastName', 'preferredFirstName', 'preferredLastName',
+    'currentRole', 'currentDepartment', 'employmentType',
     'freshserviceId', 'workEmail', 'personalEmail', 'workPhone', 'mobilePhone',
     'workLocation', 'workLocationType', 'managerName', 'costCenter', 'jobBand',
     'mailingAddress', 'photoUrl',
@@ -88,11 +111,27 @@ export async function updateEmployeeProfile(
     const oldVal = (existing as Record<string, unknown>)[key] as string | null
     if (newVal.trim() === (oldVal ?? '').trim()) continue // no change
 
-    // Only include in diff payload if it's a visible field (not photoUrl)
+    // Only include in diff payload if it's a labelled field (not photoUrl)
     if (key !== 'photoUrl' && FIELD_LABELS[key]) {
       diff[FIELD_LABELS[key]] = { from: oldVal ?? null, to: newVal.trim() }
     }
     ;(updates as Record<string, unknown>)[key] = newVal.trim()
+  }
+
+  // Recompute display name whenever any name field changes
+  const nameKeys = ['legalFirstName', 'legalLastName', 'preferredFirstName', 'preferredLastName']
+  if (nameKeys.some((k) => k in updates)) {
+    const u = updates as Record<string, unknown>
+    const newDisplayName = computeDisplayName(
+      (u.preferredFirstName ?? existing.preferredFirstName) as string | null,
+      (u.preferredLastName ?? existing.preferredLastName) as string | null,
+      (u.legalFirstName ?? existing.legalFirstName) as string | null,
+      (u.legalLastName ?? existing.legalLastName) as string | null,
+      existing.currentName
+    )
+    if (newDisplayName !== existing.currentName) {
+      u.currentName = newDisplayName
+    }
   }
 
   if (Object.keys(updates).length === 0) {
@@ -145,8 +184,20 @@ export async function findOrCreateEmployee(
     return { ...result, employeeId: existing.id }
   }
 
-  // Create new
-  if (!incoming.currentName) return { error: 'currentName is required to create a new employee' }
+  // Create new — need at minimum a name
+  const legalFirst = incoming.legalFirstName?.trim() ?? (incoming.currentName?.trim().split(/\s+/).slice(0, -1).join(' ') || incoming.currentName?.trim() || '')
+  const legalLast = incoming.legalLastName?.trim() ?? (incoming.currentName?.trim().split(/\s+/).slice(-1)[0] ?? '')
+
+  if (!legalFirst && !legalLast) {
+    return { error: 'At minimum legalFirstName or currentName is required to create a new employee' }
+  }
+
+  const displayName = computeDisplayName(
+    incoming.preferredFirstName?.trim(),
+    incoming.preferredLastName?.trim(),
+    legalFirst,
+    legalLast
+  )
 
   const id = crypto.randomUUID()
   const now = new Date()
@@ -155,7 +206,11 @@ export async function findOrCreateEmployee(
   await db.transaction(async (tx) => {
     await tx.insert(employees).values({
       id,
-      currentName: incoming.currentName!.trim(),
+      currentName: displayName,
+      legalFirstName: legalFirst || null,
+      legalLastName: legalLast || null,
+      preferredFirstName: incoming.preferredFirstName?.trim() ?? null,
+      preferredLastName: incoming.preferredLastName?.trim() ?? null,
       currentRole: incoming.currentRole?.trim() ?? 'Unknown',
       currentDepartment: incoming.currentDepartment?.trim() ?? 'Unknown',
       employmentType: incoming.employmentType ?? 'FTE',
@@ -220,10 +275,21 @@ export async function createEmployee(input: z.infer<typeof createEmployeeSchema>
   const now = new Date()
   const startDate = new Date(data.startDate)
 
+  const displayName = computeDisplayName(
+    data.preferredFirstName,
+    data.preferredLastName,
+    data.legalFirstName,
+    data.legalLastName
+  )
+
   await db.transaction(async (tx) => {
     await tx.insert(employees).values({
       id,
-      currentName: data.currentName,
+      currentName: displayName,
+      legalFirstName: data.legalFirstName,
+      legalLastName: data.legalLastName,
+      preferredFirstName: data.preferredFirstName ?? null,
+      preferredLastName: data.preferredLastName ?? null,
       currentRole: data.currentRole,
       currentDepartment: data.currentDepartment,
       employmentType: data.employmentType,

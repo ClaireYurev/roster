@@ -13,7 +13,13 @@ import { z } from 'zod'
 import { findOrCreateEmployee } from '@/actions/employees'
 
 const schema = z.object({
-  currentName: z.string().min(1),
+  // Accept both structured name fields and legacy currentName
+  legalFirstName: z.string().optional(),
+  legalLastName: z.string().optional(),
+  preferredFirstName: z.string().optional(),
+  preferredLastName: z.string().optional(),
+  // Legacy: bare full name string; parsed into legal first+last internally
+  currentName: z.string().optional(),
   currentRole: z.string().optional(),
   currentDepartment: z.string().optional(),
   employmentType: z.enum(['FTE', 'CONTRACTOR']).optional(),
@@ -45,6 +51,15 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json(
       { error: 'Validation failed', details: parsed.error.flatten().fieldErrors },
+      { status: 422 }
+    )
+  }
+
+  // Must have at least some name to identify/create the employee
+  const d = parsed.data
+  if (!d.legalFirstName && !d.legalLastName && !d.currentName) {
+    return NextResponse.json(
+      { error: 'At least one of legalFirstName, legalLastName, or currentName is required' },
       { status: 422 }
     )
   }

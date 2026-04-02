@@ -24,7 +24,10 @@ import {
 } from 'lucide-react'
 
 type PreviewData = {
-  currentName?: string
+  legalFirstName?: string
+  legalLastName?: string
+  preferredFirstName?: string
+  preferredLastName?: string
   currentRole?: string
   currentDepartment?: string
   employmentType?: string
@@ -207,7 +210,12 @@ export function FreshserviceImportTool() {
           </CardHeader>
           <CardContent className="space-y-2">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2">
-              <PreviewField label="Name" value={preview.currentName} />
+              {(preview.legalFirstName || preview.legalLastName) && (
+                <PreviewField label="Legal Name" value={[preview.legalFirstName, preview.legalLastName].filter(Boolean).join(' ')} />
+              )}
+              {(preview.preferredFirstName || preview.preferredLastName) && (
+                <PreviewField label="Preferred Name" value={[preview.preferredFirstName, preview.preferredLastName].filter(Boolean).join(' ')} />
+              )}
               <PreviewField label="Job Title" value={preview.currentRole} />
               <PreviewField label="Department" value={preview.currentDepartment} />
               <PreviewField

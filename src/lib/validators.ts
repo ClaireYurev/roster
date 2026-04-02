@@ -1,7 +1,12 @@
 import { z } from 'zod'
 
 export const createEmployeeSchema = z.object({
-  currentName: z.string().min(1, 'Name is required').max(200),
+  // Legal name — required for HR/payroll
+  legalFirstName: z.string().min(1, 'Legal first name is required').max(100),
+  legalLastName: z.string().min(1, 'Legal last name is required').max(100),
+  // Preferred name — shown in all views/dashboards; falls back to legal name if blank
+  preferredFirstName: z.string().max(100).optional(),
+  preferredLastName: z.string().max(100).optional(),
   currentRole: z.string().min(1, 'Role is required').max(200),
   currentDepartment: z.string().min(1, 'Department is required').max(200),
   employmentType: z.enum(['CONTRACTOR', 'FTE']),
@@ -16,7 +21,9 @@ export type CreateEmployeeInput = z.infer<typeof createEmployeeSchema>
 
 export const nameChangeSchema = z.object({
   employeeId: z.string().uuid(),
-  newName: z.string().min(1, 'New name is required').max(200),
+  // Legal name fields — both required; this is the official name change event
+  newLegalFirstName: z.string().min(1, 'Legal first name is required').max(100),
+  newLegalLastName: z.string().min(1, 'Legal last name is required').max(100),
   eventDate: z.string().refine((d) => !isNaN(Date.parse(d)), { message: 'Invalid date' }),
   notes: z.string().optional(),
 })

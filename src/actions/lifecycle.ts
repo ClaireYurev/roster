@@ -11,29 +11,51 @@ import {
   separationSchema,
 } from '@/lib/validators'
 import type { WeeklyOnboarding } from '@/types'
-import { getNextMondayAndWednesday } from '@/lib/utils'
+import { getNextMondayAndWednesday, computeDisplayName } from '@/lib/utils'
 import type { z } from 'zod'
 
 export async function logNameChange(input: z.infer<typeof nameChangeSchema>) {
   const parsed = nameChangeSchema.safeParse(input)
   if (!parsed.success) return { error: parsed.error.flatten().fieldErrors }
 
-  const { employeeId, newName, eventDate, notes } = parsed.data
+  const { employeeId, newLegalFirstName, newLegalLastName, eventDate, notes } = parsed.data
   const now = new Date()
 
   const emp = await db.query.employees.findFirst({ where: eq(employees.id, employeeId) })
   if (!emp) return { error: 'Employee not found' }
+
+  // Display name uses new legal name but keeps any existing preferred name
+  const newDisplayName = computeDisplayName(
+    emp.preferredFirstName,
+    emp.preferredLastName,
+    newLegalFirstName,
+    newLegalLastName
+  )
 
   await db.transaction(async (tx) => {
     await tx.insert(lifecycleEvents).values({
       employeeId,
       eventType: 'NAME_CHANGE',
       eventDate: new Date(eventDate),
-      payload: { oldName: emp.currentName, newName } as unknown as null,
+      payload: {
+        oldName: emp.currentName,
+        newName: newDisplayName,
+        oldLegalFirst: emp.legalFirstName,
+        oldLegalLast: emp.legalLastName,
+        newLegalFirst: newLegalFirstName,
+        newLegalLast: newLegalLastName,
+      } as unknown as null,
       notes: notes ?? null,
+      source: 'MANUAL',
       createdAt: now,
     })
-    await tx.update(employees).set({ currentName: newName }).where(eq(employees.id, employeeId))
+    await tx.update(employees)
+      .set({
+        legalFirstName: newLegalFirstName,
+        legalLastName: newLegalLastName,
+        currentName: newDisplayName,
+      })
+      .where(eq(employees.id, employeeId))
   })
 
   revalidatePath('/dashboard')

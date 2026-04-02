@@ -92,7 +92,7 @@ export function LogEventDialog({ employee }: { employee: Employee }) {
           </DialogHeader>
 
           {activeModal === 'name-change' && (
-            <NameChangeForm employeeId={employee.id} currentName={employee.currentName} onSuccess={onSuccess} />
+            <NameChangeForm employee={employee} onSuccess={onSuccess} />
           )}
           {activeModal === 'role-change' && (
             <RoleChangeForm

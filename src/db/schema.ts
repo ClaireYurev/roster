@@ -65,6 +65,12 @@ export const employees = sqliteTable('employees', {
   mailingAddress: text('mailing_address'),
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
 
+  // --- Legal name (required) + preferred name (optional, shown everywhere by default) ---
+  legalFirstName: text('legal_first_name'),
+  legalLastName: text('legal_last_name'),
+  preferredFirstName: text('preferred_first_name'),  // overrides legal first for display
+  preferredLastName: text('preferred_last_name'),    // overrides legal last for display
+
   // --- Profile fields (populated via browser extension / Freshservice import) ---
   freshserviceId: text('freshservice_id'),      // HR system employee ID
   workEmail: text('work_email'),

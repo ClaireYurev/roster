@@ -53,7 +53,10 @@ export function AddEmployeeDialog() {
       if ('error' in result) {
         toast({ title: 'Validation error', description: 'Check required fields.', variant: 'destructive' })
       } else {
-        toast({ title: 'Employee added', description: `${data.currentName} has been onboarded.` })
+        const displayName = data.preferredFirstName
+          ? `${data.preferredFirstName} ${data.preferredLastName ?? data.legalLastName}`.trim()
+          : `${data.legalFirstName} ${data.legalLastName}`.trim()
+        toast({ title: 'Employee added', description: `${displayName} has been onboarded.` })
         reset()
         setOpen(false)
         router.refresh()
@@ -73,12 +76,37 @@ export function AddEmployeeDialog() {
           <DialogTitle>Add New Employee</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="col-span-2 space-y-1">
-              <Label htmlFor="currentName">Full Name *</Label>
-              <Input id="currentName" {...register('currentName')} placeholder="Jane Smith" />
-              {errors.currentName && <p className="text-xs text-destructive">{errors.currentName.message}</p>}
+          {/* Legal name */}
+          <div>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Legal Name (HR / Payroll)</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label htmlFor="legalFirstName">Legal First Name *</Label>
+                <Input id="legalFirstName" {...register('legalFirstName')} placeholder="Jane" />
+                {errors.legalFirstName && <p className="text-xs text-destructive">{errors.legalFirstName.message}</p>}
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="legalLastName">Legal Last Name *</Label>
+                <Input id="legalLastName" {...register('legalLastName')} placeholder="Smith" />
+                {errors.legalLastName && <p className="text-xs text-destructive">{errors.legalLastName.message}</p>}
+              </div>
             </div>
+          </div>
+          {/* Preferred name */}
+          <div>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Preferred Name <span className="normal-case">(shown in all views — leave blank to use legal name)</span></p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label htmlFor="preferredFirstName">Preferred First</Label>
+                <Input id="preferredFirstName" {...register('preferredFirstName')} placeholder="e.g. Alex" />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="preferredLastName">Preferred Last</Label>
+                <Input id="preferredLastName" {...register('preferredLastName')} placeholder="e.g. Smith-Jones" />
+              </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
               <Label htmlFor="currentRole">Job Title *</Label>
               <Input id="currentRole" {...register('currentRole')} placeholder="Software Engineer" />

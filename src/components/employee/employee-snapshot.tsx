@@ -80,6 +80,15 @@ export function EmployeeSnapshot({
             <div className="flex items-start justify-between gap-4">
               <div>
                 <CardTitle className="text-2xl">{employee.currentName}</CardTitle>
+                {/* Show legal name as a subtitle only when it differs from the display name */}
+                {(employee.legalFirstName || employee.legalLastName) && (() => {
+                  const legal = [employee.legalFirstName, employee.legalLastName].filter(Boolean).join(' ')
+                  return legal !== employee.currentName ? (
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Legal name: {legal}
+                    </p>
+                  ) : null
+                })()}
                 <p className="text-muted-foreground mt-0.5">{employee.currentRole}</p>
                 {employee.freshserviceId && (
                   <p className="text-xs text-muted-foreground mt-0.5">

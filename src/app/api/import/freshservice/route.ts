@@ -32,12 +32,9 @@ function mapFsTicketToProfile(ticket: {
 }): ProfileFields & { _fsSubject?: string } {
   const cf = ticket.custom_fields ?? {}
 
-  // Employee name: prefer explicit first+last fields, fall back to subject parsing
+  // Legal name from ticket fields
   const firstName = str(cf.employee_first_name ?? cf.cf_employee_first_name)
   const lastName = str(cf.employee_last_name ?? cf.cf_employee_last_name)
-  const fullName = firstName && lastName
-    ? `${firstName} ${lastName}`
-    : str(cf.employee_name ?? cf.cf_employee_name) ?? undefined
 
   // Employment type normalisation
   const rawType = str(cf.employee_type ?? cf.cf_employee_type) ?? ''
@@ -60,7 +57,8 @@ function mapFsTicketToProfile(ticket: {
   ].filter(Boolean)
 
   return {
-    currentName: fullName,
+    legalFirstName: firstName ?? undefined,
+    legalLastName: lastName ?? undefined,
     currentRole: str(cf.job_title ?? cf.cf_job_title) ?? undefined,
     currentDepartment: str(cf.department ?? cf.cf_department) ?? undefined,
     employmentType,

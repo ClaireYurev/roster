@@ -26,6 +26,24 @@ export function formatDate(date: Date | number | null | undefined): string {
   return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
+/**
+ * Compute the display name from preferred + legal name fields.
+ * Preferred first/last overrides the corresponding legal parts independently,
+ * e.g. preferredFirst="Alex" + legalLast="Smith" → "Alex Smith"
+ */
+export function computeDisplayName(
+  preferredFirst: string | null | undefined,
+  preferredLast: string | null | undefined,
+  legalFirst: string | null | undefined,
+  legalLast: string | null | undefined,
+  fallback = ''
+): string {
+  const first = preferredFirst?.trim() || legalFirst?.trim() || ''
+  const last = preferredLast?.trim() || legalLast?.trim() || ''
+  const full = [first, last].filter(Boolean).join(' ')
+  return full || fallback
+}
+
 /** Get the next Monday and Wednesday from today */
 export function getNextMondayAndWednesday(): { monday: Date; wednesday: Date } {
   const today = new Date()
