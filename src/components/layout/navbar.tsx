@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { auth, signOut } from '@/auth'
 import { ThemeToggle } from './theme-toggle'
-import { Users, CalendarDays, Monitor, Upload, LayoutDashboard } from 'lucide-react'
+import { Users, CalendarDays, Monitor, Upload, LayoutDashboard, Terminal } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 
@@ -11,6 +11,8 @@ const navLinks = [
   { href: '/hardware', label: 'Hardware', icon: Monitor },
   { href: '/admin/import', label: 'Import', icon: Upload },
 ]
+
+const devBypass = process.env.AUTH_DEV_BYPASS === 'true'
 
 export async function Navbar() {
   const session = await auth()
@@ -22,41 +24,51 @@ export async function Navbar() {
     .slice(0, 2) ?? '?'
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex h-14 items-center gap-4 px-4 md:px-6">
-        <Link href="/dashboard" className="flex items-center gap-2 font-semibold shrink-0">
-          <Users className="h-5 w-5" />
-          <span>Roster</span>
-        </Link>
+    <header className="sticky top-0 z-50 w-full">
+      {/* Dev mode warning strip */}
+      {devBypass && (
+        <div className="flex items-center justify-center gap-1.5 bg-yellow-400 dark:bg-yellow-600 py-1 px-4 text-xs font-medium text-yellow-900 dark:text-yellow-100">
+          <Terminal className="h-3 w-3 shrink-0" />
+          DEV MODE — JumpCloud auth is bypassed. Do not use in production.
+        </div>
+      )}
 
-        <nav className="flex items-center gap-1 ml-4">
-          {navLinks.map(({ href, label, icon: Icon }) => (
-            <Link
-              key={href}
-              href={href}
-              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="flex h-14 items-center gap-4 px-4 md:px-6">
+          <Link href="/dashboard" className="flex items-center gap-2 font-semibold shrink-0">
+            <Users className="h-5 w-5" />
+            <span>Roster</span>
+          </Link>
+
+          <nav className="flex items-center gap-1 ml-4">
+            {navLinks.map(({ href, label, icon: Icon }) => (
+              <Link
+                key={href}
+                href={href}
+                className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+              >
+                <Icon className="h-4 w-4" />
+                {label}
+              </Link>
+            ))}
+          </nav>
+
+          <div className="ml-auto flex items-center gap-2">
+            <ThemeToggle />
+            <Avatar className="h-8 w-8">
+              <AvatarFallback className="text-xs">{userInitials}</AvatarFallback>
+            </Avatar>
+            <form
+              action={async () => {
+                'use server'
+                await signOut({ redirectTo: '/auth/signin' })
+              }}
             >
-              <Icon className="h-4 w-4" />
-              {label}
-            </Link>
-          ))}
-        </nav>
-
-        <div className="ml-auto flex items-center gap-2">
-          <ThemeToggle />
-          <Avatar className="h-8 w-8">
-            <AvatarFallback className="text-xs">{userInitials}</AvatarFallback>
-          </Avatar>
-          <form
-            action={async () => {
-              'use server'
-              await signOut({ redirectTo: '/auth/signin' })
-            }}
-          >
-            <Button variant="ghost" size="sm" type="submit">
-              Sign out
-            </Button>
-          </form>
+              <Button variant="ghost" size="sm" type="submit">
+                Sign out
+              </Button>
+            </form>
+          </div>
         </div>
       </div>
     </header>
