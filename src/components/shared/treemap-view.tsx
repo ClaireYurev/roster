@@ -17,36 +17,41 @@ type Rect = { x: number; y: number; w: number; h: number }
 type PositionedItem = TreemapItem & Rect
 
 // ── Squarified treemap algorithm ─────────────────────────────────────────────
+// Sizes passed to squarify are pre-normalized to pixel areas (sum = w * h).
 
-function worstRatio(row: number[], short: number, total: number, rowLen: number): number {
-  const rowSum = row.reduce((s, v) => s + v, 0)
-  const scale = (short * rowLen) / total
-  const max = Math.max(...row)
-  const min = Math.min(...row)
-  return Math.max((scale * scale * max) / (rowSum * rowSum), (rowSum * rowSum) / (scale * scale * min))
+/** Worst aspect ratio across all tiles in a strip of shorter-side length `w`. */
+function worst(row: number[], w: number): number {
+  if (row.length === 0) return Infinity
+  const s = row.reduce((a, b) => a + b, 0)
+  const rmax = Math.max(...row)
+  const rmin = Math.min(...row)
+  // For each tile: thickness = s/w, tileLen = size/(s/w) = size*w/s
+  // aspect = max(thickness/tileLen, tileLen/thickness) = max(s/(w*size), w*size/s)
+  // worst = max over all tiles → driven by max and min sizes
+  return Math.max((w * w * rmax) / (s * s), (s * s) / (w * w * rmin))
 }
 
 function squarify(
   items: TreemapItem[],
-  rect: Rect,
-  total: number,
+  sizes: number[], // pre-normalized pixel areas, sum = w * h
+  x: number, y: number, w: number, h: number,
   result: PositionedItem[],
 ): void {
-  if (items.length === 0) return
+  if (items.length === 0 || w <= 0 || h <= 0) return
+  if (items.length === 1) {
+    result.push({ ...items[0], x, y, w, h })
+    return
+  }
 
-  const { x, y, w, h } = rect
   const short = Math.min(w, h)
+  const isWide = w >= h // strips run along the long axis
 
   let row: number[] = []
   let i = 0
 
   while (i < items.length) {
-    const next = (items[i].value / total) * (w * h)
-    const candidate = [...row, next]
-    const rowLen = short * short
-    const rowLenWithCand = rowLen
-
-    if (row.length === 0 || worstRatio(candidate, short, w * h, rowLenWithCand) <= worstRatio(row, short, w * h, rowLenWithCand)) {
+    const candidate = [...row, sizes[i]]
+    if (row.length === 0 || worst(candidate, short) <= worst(row, short)) {
       row = candidate
       i++
     } else {
@@ -54,45 +59,46 @@ function squarify(
     }
   }
 
-  // Lay out the current row
-  const rowSum = row.reduce((s, v) => s + v, 0)
-  const scale = w * h
-  const isWide = w >= h
-
-  let offset = isWide ? x : y
-  let newRect: Rect
-
-  const rowThickness = (rowSum / scale) * (isWide ? w : h)
-
+  // Lay out the current row as a strip
+  const rowSum = row.reduce((a, b) => a + b, 0)
+  const thickness = rowSum / short // extent along the long axis
   const startIdx = i - row.length
+
+  // isWide: strip is on the LEFT (fixed x), tiles stack along h (y changes)
+  // !isWide: strip is on the TOP  (fixed y), tiles arrange along w (x changes)
+  let offset = isWide ? y : x
   for (let j = 0; j < row.length; j++) {
-    const fraction = row[j] / rowSum
-    const tileLen = fraction * (isWide ? h : w)
-
-    const tileRect: Rect = isWide
-      ? { x: offset, y, w: rowThickness, h: tileLen }
-      : { x, y: offset, w: tileLen, h: rowThickness }
-
-    result.push({ ...items[startIdx + j], ...tileRect })
+    const tileLen = row[j] / thickness // extent along short axis
+    result.push(
+      isWide
+        ? { ...items[startIdx + j], x, y: offset, w: thickness, h: tileLen }
+        : { ...items[startIdx + j], x: offset, y, w: tileLen, h: thickness },
+    )
     offset += tileLen
   }
 
-  // Recurse on the remaining area
+  // Recurse on remaining area — sizes still sum correctly to new rect area:
+  // isWide:  remaining = (w − thickness) × h = w*h − rowSum ✓
+  // !isWide: remaining = w × (h − thickness) = w*h − rowSum ✓
   if (i < items.length) {
-    newRect = isWide
-      ? { x: x + rowThickness, y, w: w - rowThickness, h }
-      : { x, y: y + rowThickness, w, h: h - rowThickness }
-    squarify(items.slice(i), newRect, total - rowSum, result)
+    if (isWide) {
+      squarify(items.slice(i), sizes.slice(i), x + thickness, y, w - thickness, h, result)
+    } else {
+      squarify(items.slice(i), sizes.slice(i), x, y + thickness, w, h - thickness, result)
+    }
   }
 }
 
 function layout(items: TreemapItem[], width: number, height: number): PositionedItem[] {
   if (items.length === 0 || width <= 0 || height <= 0) return []
   const sorted = [...items].sort((a, b) => b.value - a.value)
-  const total = sorted.reduce((s, item) => s + item.value, 0)
-  if (total <= 0) return []
+  const totalValue = sorted.reduce((s, item) => s + item.value, 0)
+  if (totalValue <= 0) return []
+  const area = width * height
+  // Normalize: each size is its proportional share of pixel area
+  const sizes = sorted.map((item) => (item.value / totalValue) * area)
   const result: PositionedItem[] = []
-  squarify(sorted, { x: 0, y: 0, w: width, h: height }, total, result)
+  squarify(sorted, sizes, 0, 0, width, height, result)
   return result
 }
 

@@ -33,8 +33,10 @@ export default async function ContractorsPage({
 
   if (isMap) {
     const items = contractors.map((c) => {
-      // Urgency-based sizing: expired/critical = big tiles
-      const urgency = Math.max(1, 365 - (c.daysRemaining ?? 365))
+      // Urgency-based sizing: expired/critical = big tiles.
+      // No-date contractors get a floor of 60 so they're always visible.
+      const urgencyRaw = c.daysRemaining === null ? 0 : Math.max(0, 365 - c.daysRemaining)
+      const urgency = Math.max(60, urgencyRaw)
       const name = computeDisplayName(c.preferredFirstName, c.preferredLastName, c.legalFirstName, c.legalLastName, c.currentName)
       const sub = c.daysRemaining === null
         ? 'No end date'
