@@ -2,7 +2,7 @@ import { Navbar } from '@/components/layout/navbar'
 import { ImportTool } from '@/components/import/import-tool'
 import { FreshserviceImportTool } from '@/components/import/freshservice-import-tool'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { FileText, Zap } from 'lucide-react'
+import { FileText, Zap, Upload } from 'lucide-react'
 
 export default function ImportPage() {
   return (
@@ -10,8 +10,11 @@ export default function ImportPage() {
       <Navbar />
       <main className="flex-1 p-4 md:p-6 space-y-6 max-w-7xl mx-auto w-full">
         <div>
-          <h1 className="text-xl font-semibold">Import Employees</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="text-xl font-semibold flex items-center gap-2">
+            <Upload className="h-5 w-5" />
+            Import Employees
+          </h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
             Create or update employee records from multiple sources. Existing records are matched by
             Freshservice ID or exact name — only non-blank fields are overwritten, and every change
             is logged in the employee's history.

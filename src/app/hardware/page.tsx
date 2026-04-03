@@ -6,7 +6,7 @@ import { getEmployees } from '@/actions/employees'
 import { formatCents } from '@/lib/utils'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { BarChart3 } from 'lucide-react'
+import { BarChart3, Monitor } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,7 +24,10 @@ export default async function HardwarePage() {
       <main className="flex-1 p-4 md:p-6 space-y-6 max-w-7xl mx-auto w-full">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-xl font-semibold">Hardware Assets</h1>
+            <h1 className="text-xl font-semibold flex items-center gap-2">
+              <Monitor className="h-5 w-5" />
+              Hardware Assets
+            </h1>
             <p className="text-sm text-muted-foreground mt-0.5">Inventory and assignment tracking</p>
           </div>
           <div className="flex items-center gap-2">
