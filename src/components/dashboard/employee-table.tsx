@@ -27,15 +27,16 @@ import type { EmployeeWithLatestChecklist } from '@/types'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 const QUICK_FILTERS = [
-  { label: 'All Active', id: 'active', filter: (r: EmployeeWithLatestChecklist) => r.isActive },
-  { label: 'New FTE', id: 'fte', filter: (r: EmployeeWithLatestChecklist) => r.employmentType === 'FTE' && r.isActive },
-  { label: 'Contractor', id: 'contractor', filter: (r: EmployeeWithLatestChecklist) => r.employmentType === 'CONTRACTOR' && r.isActive },
+  { label: 'All Active', id: 'active', filter: (r: EmployeeWithLatestChecklist) => r.status === 'ACTIVE' || r.status === 'LOA' },
+  { label: 'New FTE', id: 'fte', filter: (r: EmployeeWithLatestChecklist) => r.employmentType === 'FTE' && r.status === 'ACTIVE' },
+  { label: 'Contractor', id: 'contractor', filter: (r: EmployeeWithLatestChecklist) => r.employmentType === 'CONTRACTOR' && r.status === 'ACTIVE' },
   { label: 'Pending IT', id: 'pending-it', filter: (r: EmployeeWithLatestChecklist) => {
     const c = r.latestChecklist
     if (!c) return true
     return !(c.jumpCloudProvisioned && c.laptopAssigned && c.emailAliasCreated)
   }},
-  { label: 'Inactive', id: 'inactive', filter: (r: EmployeeWithLatestChecklist) => !r.isActive },
+  { label: 'On LOA', id: 'loa', filter: (r: EmployeeWithLatestChecklist) => r.status === 'LOA' },
+  { label: 'Inactive', id: 'inactive', filter: (r: EmployeeWithLatestChecklist) => r.status === 'DISABLED_VOLUNTARY' || r.status === 'DISABLED_INVOLUNTARY' },
 ]
 
 export function EmployeeTable({ data }: { data: EmployeeWithLatestChecklist[] }) {
