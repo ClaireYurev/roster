@@ -1,5 +1,6 @@
 import { getOffboardedEmployees } from '@/actions/offboarding'
 import { OffboardingTable } from '@/components/offboarding/offboarding-table'
+import { Navbar } from '@/components/layout/navbar'
 import { UserX, AlertCircle } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
@@ -12,7 +13,9 @@ export default async function OffboardingPage() {
   const contractors = employees.filter((e) => e.requiresServiceNow).length
 
   return (
-    <div className="flex-1 space-y-6 p-6">
+    <div className="flex flex-col min-h-screen">
+      <Navbar />
+      <div className="flex-1 space-y-6 p-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -52,6 +55,7 @@ export default async function OffboardingPage() {
       </div>
 
       <OffboardingTable data={employees} />
+    </div>
     </div>
   )
 }

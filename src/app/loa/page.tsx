@@ -1,5 +1,6 @@
 import { getLOAEmployees } from '@/actions/loa'
 import { LOATable } from '@/components/loa/loa-table'
+import { Navbar } from '@/components/layout/navbar'
 import { PauseCircle, AlertTriangle } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
@@ -12,7 +13,9 @@ export default async function LOAPage() {
   const pcPending = employees.filter((e) => !e.loaRecord.pcEndDateConfirmed).length
 
   return (
-    <div className="flex-1 space-y-6 p-6">
+    <div className="flex flex-col min-h-screen">
+      <Navbar />
+      <div className="flex-1 space-y-6 p-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -56,6 +59,7 @@ export default async function LOAPage() {
       </div>
 
       <LOATable data={employees} />
+    </div>
     </div>
   )
 }
