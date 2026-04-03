@@ -11,6 +11,7 @@ export default async function ContractorsPage() {
   const expired = contractors.filter((c) => c.expiryStatus === 'EXPIRED').length
   const critical = contractors.filter((c) => c.expiryStatus === 'CRITICAL').length
   const active = contractors.filter((c) => c.isActive).length
+  const noDate = contractors.filter((c) => c.expiryStatus === 'NO_DATE').length
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -23,18 +24,27 @@ export default async function ContractorsPage() {
               Contractor End Dates
             </h1>
             <p className="text-sm text-muted-foreground mt-0.5">
-              {active} active contractor{active !== 1 ? 's' : ''}
-              {expired > 0 && (
-                <span className="text-red-600 dark:text-red-400 font-medium">
-                  {' '}• {expired} expired
-                </span>
-              )}
-              {critical > 0 && (
-                <span className="text-orange-600 dark:text-orange-400 font-medium">
-                  {' '}• {critical} expiring within 14 days
-                </span>
-              )}
+              Contract expiry tracking for all contractors
             </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="rounded-lg border bg-card p-4 space-y-1">
+            <p className="text-xs text-muted-foreground">Total Contractors</p>
+            <p className="text-2xl font-bold">{contractors.length}</p>
+          </div>
+          <div className="rounded-lg border bg-card p-4 space-y-1">
+            <p className="text-xs text-muted-foreground">Active</p>
+            <p className="text-2xl font-bold text-green-600 dark:text-green-400">{active}</p>
+          </div>
+          <div className={`rounded-lg border p-4 space-y-1 ${critical > 0 ? 'border-orange-300 dark:border-orange-800 bg-orange-50 dark:bg-orange-950/30' : 'bg-card'}`}>
+            <p className="text-xs text-muted-foreground">Expiring ≤14 days</p>
+            <p className={`text-2xl font-bold ${critical > 0 ? 'text-orange-600 dark:text-orange-400' : ''}`}>{critical}</p>
+          </div>
+          <div className={`rounded-lg border p-4 space-y-1 ${expired > 0 ? 'border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/30' : 'bg-card'}`}>
+            <p className="text-xs text-muted-foreground">Expired</p>
+            <p className={`text-2xl font-bold ${expired > 0 ? 'text-red-600 dark:text-red-400' : ''}`}>{expired}</p>
           </div>
         </div>
 

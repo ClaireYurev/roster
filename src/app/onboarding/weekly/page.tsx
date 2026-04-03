@@ -39,11 +39,26 @@ export default async function WeeklyOnboardingPage() {
               Employees starting {formatDayHeader(monday)} or {formatDayHeader(wednesday)}
             </p>
           </div>
-          <div className="text-right text-sm text-muted-foreground">
-            <div>{onboardings.length} total starting this week</div>
-            <div>
-              {onboardings.filter((o) => o.checklist?.jumpCloudProvisioned && o.checklist?.laptopAssigned && o.checklist?.emailAliasCreated).length} fully provisioned
-            </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="rounded-lg border bg-card p-4 space-y-1">
+            <p className="text-xs text-muted-foreground">Starting This Week</p>
+            <p className="text-2xl font-bold">{onboardings.length}</p>
+          </div>
+          <div className="rounded-lg border bg-card p-4 space-y-1">
+            <p className="text-xs text-muted-foreground">Monday {format(monday, 'MMM d')}</p>
+            <p className="text-2xl font-bold">{mondayOnboardings.length}</p>
+          </div>
+          <div className="rounded-lg border bg-card p-4 space-y-1">
+            <p className="text-xs text-muted-foreground">Wednesday {format(wednesday, 'MMM d')}</p>
+            <p className="text-2xl font-bold">{wednesdayOnboardings.length}</p>
+          </div>
+          <div className="rounded-lg border bg-card p-4 space-y-1">
+            <p className="text-xs text-muted-foreground">Fully Provisioned</p>
+            <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+              {onboardings.filter((o) => o.checklist?.jumpCloudProvisioned && o.checklist?.laptopAssigned && o.checklist?.emailAliasCreated).length}
+            </p>
           </div>
         </div>
 
