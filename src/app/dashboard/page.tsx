@@ -16,14 +16,13 @@ export default async function DashboardPage() {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
-      <main className="flex-1 p-4 md:p-6 space-y-4">
-        {/* Contract expiry alert — shown whenever any contractor is within 14 days or expired */}
+      <main className="flex-1 p-4 md:p-6 space-y-6 max-w-7xl mx-auto w-full">
         <ContractorExpiryBanner contractors={expiringContractors} />
 
-        <div className="flex items-center justify-between">
+        <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-xl font-semibold">Employees</h1>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground mt-0.5">
               {employees.filter((e) => e.isActive).length} active •{' '}
               {employees.length} total
             </p>

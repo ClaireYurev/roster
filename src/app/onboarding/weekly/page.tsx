@@ -28,7 +28,7 @@ export default async function WeeklyOnboardingPage() {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
-      <main className="flex-1 p-4 md:p-6 space-y-6 max-w-6xl mx-auto w-full">
+      <main className="flex-1 p-4 md:p-6 space-y-6 max-w-7xl mx-auto w-full">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-xl font-semibold flex items-center gap-2">

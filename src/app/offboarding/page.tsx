@@ -15,12 +15,11 @@ export default async function OffboardingPage() {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
-      <div className="flex-1 space-y-6 p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+      <main className="flex-1 p-4 md:p-6 space-y-6 max-w-7xl mx-auto w-full">
+      <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold flex items-center gap-2">
-            <UserX className="h-6 w-6 text-red-600" />
+          <h1 className="text-xl font-semibold flex items-center gap-2">
+            <UserX className="h-5 w-5 text-red-600" />
             Offboarding
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
@@ -55,7 +54,7 @@ export default async function OffboardingPage() {
       </div>
 
       <OffboardingTable data={employees} />
-    </div>
+      </main>
     </div>
   )
 }
