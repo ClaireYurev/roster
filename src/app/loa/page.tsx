@@ -1,16 +1,66 @@
 import { getLOAEmployees } from '@/actions/loa'
 import { LOATable } from '@/components/loa/loa-table'
 import { Navbar } from '@/components/layout/navbar'
+import { TreemapView } from '@/components/shared/treemap-view'
+import { ViewToggle } from '@/components/shared/view-toggle'
+import { computeDisplayName } from '@/lib/utils'
 import { PauseCircle, AlertTriangle } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
-export default async function LOAPage() {
+export default async function LOAPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ view?: string }>
+}) {
+  const { view } = await searchParams
+  const isMap = view === 'map'
+
   const employees = await getLOAEmployees()
 
   const overdueCount = employees.filter((e) => e.isOverdue).length
   const jumpcloudPending = employees.filter((e) => !e.loaRecord.jumpcloudSuspended).length
   const pcPending = employees.filter((e) => !e.loaRecord.pcEndDateConfirmed).length
+
+  if (isMap) {
+    const items = employees.map((emp) => {
+      const name = computeDisplayName(emp.preferredFirstName, emp.preferredLastName, emp.legalFirstName, emp.legalLastName, emp.currentName)
+      return {
+        id: emp.id,
+        label: name,
+        sublabel: `${emp.daysOnLOA}d out`,
+        value: Math.max(1, emp.daysOnLOA),
+        color: emp.isOverdue ? '#dc2626' : '#7c3aed',
+        href: `/employees/${emp.id}`,
+      }
+    })
+
+    return (
+      <div className="flex flex-col h-screen">
+        <Navbar />
+        <div className="flex items-center justify-between px-4 py-2 border-b bg-background shrink-0">
+          <div className="flex items-center gap-3">
+            <h1 className="text-sm font-semibold">Leave of Absence</h1>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <span style={{ background: '#7c3aed' }} className="inline-block w-2.5 h-2.5 rounded-sm" />
+                On LOA
+              </span>
+              <span className="flex items-center gap-1">
+                <span style={{ background: '#dc2626' }} className="inline-block w-2.5 h-2.5 rounded-sm" />
+                Overdue
+              </span>
+              <span className="text-muted-foreground/60">· tile size = days on leave</span>
+            </div>
+          </div>
+          <ViewToggle />
+        </div>
+        <div className="flex-1 p-2 min-h-0">
+          <TreemapView items={items} />
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -26,6 +76,7 @@ export default async function LOAPage() {
             Employees currently on LOA — Azure accounts remain active; JumpCloud must be suspended.
           </p>
         </div>
+        <ViewToggle />
       </div>
 
       {/* Summary cards */}
