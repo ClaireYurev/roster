@@ -10,10 +10,14 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    // suppressHydrationWarning is required for next-themes to inject the class attribute
     <html lang="en" suppressHydrationWarning>
       <body className="font-sans antialiased min-h-screen bg-background text-foreground">
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="zinc"
+          themes={['zinc', 'dark', 'midnight', 'obsidian', 'arctic', 'forest', 'noir', 'copper', 'petal', 'dusk']}
+          disableTransitionOnChange={false}
+        >
           {children}
           <Toaster />
         </ThemeProvider>

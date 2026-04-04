@@ -1,7 +1,10 @@
 import type { Config } from 'tailwindcss'
 
+// All dark themes — dark: Tailwind variants activate inside any of these classes
+const DARK_THEMES = '.dark, .midnight, .obsidian, .forest, .noir, .copper, .dusk'
+
 const config: Config = {
-  darkMode: ['class'],
+  darkMode: ['selector', `:is(${DARK_THEMES}) &`],
   content: [
     './src/pages/**/*.{ts,tsx}',
     './src/components/**/*.{ts,tsx}',
@@ -15,6 +18,13 @@ const config: Config = {
       screens: { '2xl': '1400px' },
     },
     extend: {
+      fontFamily: {
+        // Prioritize SF Pro (macOS/iOS), then Segoe UI (Windows), then system fonts
+        sans: [
+          '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto',
+          '"Helvetica Neue"', 'Arial', 'sans-serif', '"Apple Color Emoji"',
+        ],
+      },
       colors: {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',

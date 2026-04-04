@@ -2,52 +2,260 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─────────────────────────────────────────────────────────────
+   THEME DEFINITIONS
+   All themes set CSS custom properties used by shadcn/ui + Tailwind.
+   Dark themes also receive the .dark class treatment via Tailwind config.
+   ───────────────────────────────────────────────────────────── */
+
 @layer base {
-  :root {
+
+  /* ── 1. ZINC — Clean, minimal white (default light) ────────── */
+  :root,
+  .zinc {
     --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --foreground: 240 10% 3.9%;
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 240 10% 3.9%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 240 5.9% 10%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 240 5.9% 10%;
     --radius: 0.5rem;
   }
 
+  /* ── 2. SLATE — Refined neutral dark ───────────────────────── */
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 240 5.9% 10%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 240 4.9% 83.9%;
+    --radius: 0.5rem;
   }
+
+  /* ── 3. MIDNIGHT — Deep navy / indigo ──────────────────────── */
+  .midnight {
+    --background: 224 71% 4%;
+    --foreground: 213 31% 91%;
+    --card: 224 55% 7%;
+    --card-foreground: 213 31% 91%;
+    --popover: 224 55% 7%;
+    --popover-foreground: 213 31% 91%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 224 71% 4%;
+    --secondary: 222 47% 14%;
+    --secondary-foreground: 213 31% 91%;
+    --muted: 223 47% 10%;
+    --muted-foreground: 215 16% 57%;
+    --accent: 222 47% 14%;
+    --accent-foreground: 213 31% 91%;
+    --destructive: 0 72% 42%;
+    --destructive-foreground: 213 31% 91%;
+    --border: 222 47% 17%;
+    --input: 222 47% 17%;
+    --ring: 217 91% 60%;
+    --radius: 0.5rem;
+  }
+
+  /* ── 4. OBSIDIAN — Warm charcoal with amber glow ───────────── */
+  .obsidian {
+    --background: 28 10% 6%;
+    --foreground: 45 14% 93%;
+    --card: 28 10% 9%;
+    --card-foreground: 45 14% 93%;
+    --popover: 28 10% 9%;
+    --popover-foreground: 45 14% 93%;
+    --primary: 38 92% 50%;
+    --primary-foreground: 28 10% 6%;
+    --secondary: 28 10% 14%;
+    --secondary-foreground: 45 14% 93%;
+    --muted: 28 8% 12%;
+    --muted-foreground: 28 5% 56%;
+    --accent: 28 10% 14%;
+    --accent-foreground: 45 14% 93%;
+    --destructive: 0 72% 42%;
+    --destructive-foreground: 45 14% 93%;
+    --border: 28 10% 18%;
+    --input: 28 10% 18%;
+    --ring: 38 92% 50%;
+    --radius: 0.375rem;
+  }
+
+  /* ── 5. ARCTIC — Cool icy blue-gray light ──────────────────── */
+  .arctic {
+    --background: 200 20% 97%;
+    --foreground: 215 50% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 215 50% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 50% 15%;
+    --primary: 200 98% 36%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 200 20% 93%;
+    --secondary-foreground: 215 50% 15%;
+    --muted: 200 20% 93%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 200 60% 92%;
+    --accent-foreground: 200 98% 22%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 200 30% 87%;
+    --input: 200 30% 87%;
+    --ring: 200 98% 36%;
+    --radius: 0.625rem;
+  }
+
+  /* ── 6. FOREST — Deep hunter green ─────────────────────────── */
+  .forest {
+    --background: 150 30% 4%;
+    --foreground: 150 10% 92%;
+    --card: 150 25% 7%;
+    --card-foreground: 150 10% 92%;
+    --popover: 150 25% 7%;
+    --popover-foreground: 150 10% 92%;
+    --primary: 142 71% 42%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 150 25% 12%;
+    --secondary-foreground: 150 10% 92%;
+    --muted: 150 25% 10%;
+    --muted-foreground: 150 8% 55%;
+    --accent: 150 25% 12%;
+    --accent-foreground: 150 10% 92%;
+    --destructive: 0 72% 42%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 150 25% 16%;
+    --input: 150 25% 16%;
+    --ring: 142 71% 42%;
+    --radius: 0.5rem;
+  }
+
+  /* ── 7. NOIR — High-contrast editorial black/cream ──────────── */
+  .noir {
+    --background: 0 0% 4%;
+    --foreground: 40 15% 93%;
+    --card: 0 0% 7%;
+    --card-foreground: 40 15% 93%;
+    --popover: 0 0% 7%;
+    --popover-foreground: 40 15% 93%;
+    --primary: 40 15% 93%;
+    --primary-foreground: 0 0% 4%;
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 40 15% 93%;
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 55%;
+    --accent: 0 0% 12%;
+    --accent-foreground: 40 15% 93%;
+    --destructive: 0 72% 42%;
+    --destructive-foreground: 40 15% 93%;
+    --border: 0 0% 15%;
+    --input: 0 0% 15%;
+    --ring: 40 15% 70%;
+    --radius: 0.25rem;
+  }
+
+  /* ── 8. COPPER — Dark with warm copper/amber accent ─────────── */
+  .copper {
+    --background: 25 12% 6%;
+    --foreground: 35 15% 93%;
+    --card: 25 12% 9%;
+    --card-foreground: 35 15% 93%;
+    --popover: 25 12% 9%;
+    --popover-foreground: 35 15% 93%;
+    --primary: 24 95% 53%;
+    --primary-foreground: 25 12% 6%;
+    --secondary: 25 12% 14%;
+    --secondary-foreground: 35 15% 93%;
+    --muted: 25 10% 12%;
+    --muted-foreground: 25 8% 55%;
+    --accent: 25 12% 14%;
+    --accent-foreground: 35 15% 93%;
+    --destructive: 0 72% 42%;
+    --destructive-foreground: 35 15% 93%;
+    --border: 25 12% 18%;
+    --input: 25 12% 18%;
+    --ring: 24 95% 53%;
+    --radius: 0.5rem;
+  }
+
+  /* ── 9. PETAL — Soft warm rose light ───────────────────────── */
+  .petal {
+    --background: 345 30% 98%;
+    --foreground: 336 35% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 336 35% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 336 35% 12%;
+    --primary: 336 74% 43%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 345 25% 94%;
+    --secondary-foreground: 336 35% 12%;
+    --muted: 345 25% 94%;
+    --muted-foreground: 336 10% 47%;
+    --accent: 336 74% 95%;
+    --accent-foreground: 336 74% 33%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 336 20% 88%;
+    --input: 336 20% 88%;
+    --ring: 336 74% 43%;
+    --radius: 0.75rem;
+  }
+
+  /* ── 10. DUSK — Deep violet twilight ───────────────────────── */
+  .dusk {
+    --background: 270 20% 5%;
+    --foreground: 265 10% 92%;
+    --card: 270 20% 8%;
+    --card-foreground: 265 10% 92%;
+    --popover: 270 20% 8%;
+    --popover-foreground: 265 10% 92%;
+    --primary: 258 85% 64%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 270 20% 13%;
+    --secondary-foreground: 265 10% 92%;
+    --muted: 270 20% 11%;
+    --muted-foreground: 265 8% 57%;
+    --accent: 270 20% 13%;
+    --accent-foreground: 265 10% 92%;
+    --destructive: 0 72% 42%;
+    --destructive-foreground: 265 10% 92%;
+    --border: 270 20% 18%;
+    --input: 270 20% 18%;
+    --ring: 258 85% 64%;
+    --radius: 0.5rem;
+  }
+
 }
+
+/* ─────────────────────────────────────────────────────────────
+   BASE STYLES
+   ───────────────────────────────────────────────────────────── */
 
 @layer base {
   * {
@@ -55,5 +263,16 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  /* Smooth theme transitions */
+  *, *::before, *::after {
+    transition-property: background-color, border-color, color, fill, stroke;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+  }
+  /* But not transforms or opacity — avoid jank */
+  a, button, [role="button"] {
+    transition-duration: 100ms;
   }
 }
