@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import {
   useReactTable,
   getCoreRowModel,
@@ -24,11 +24,26 @@ import Link from 'next/link'
 import { formatDate } from '@/lib/utils'
 import { ArrowUpDown, AlertTriangle, CheckCircle2, XCircle, Clock } from 'lucide-react'
 import type { LOAEmployeeWithRecord } from '@/actions/loa'
+import { EditableCell, EditableToggle } from '@/components/shared/editable-cell'
+import { updateLoaRecordDetails } from '@/actions/loa'
+import { updateEmployeeProfile } from '@/actions/employees'
 
 // ---------------------------------------------------------------------------
 // Columns
 // ---------------------------------------------------------------------------
-const columns: ColumnDef<LOAEmployeeWithRecord>[] = [
+function buildColumns(): ColumnDef<LOAEmployeeWithRecord>[] {
+  function saveEmp(id: string, field: Parameters<typeof updateEmployeeProfile>[1]) {
+    return updateEmployeeProfile(id, field, 'MANUAL').then((r) =>
+      'error' in r ? { error: r.error as string } : undefined,
+    )
+  }
+  function saveLoa(loaRecordId: number, updates: Parameters<typeof updateLoaRecordDetails>[1]) {
+    return updateLoaRecordDetails(loaRecordId, updates).then((r) =>
+      'error' in r ? { error: r.error as string } : undefined,
+    )
+  }
+
+  return [
   {
     accessorKey: 'currentName',
     header: ({ column }) => (
@@ -45,7 +60,13 @@ const columns: ColumnDef<LOAEmployeeWithRecord>[] = [
   {
     accessorKey: 'currentRole',
     header: 'Role',
-    cell: ({ row }) => <span className="text-sm text-muted-foreground">{row.getValue('currentRole')}</span>,
+    cell: ({ row }) => (
+      <EditableCell
+        value={row.original.currentRole}
+        onSave={(v) => saveEmp(row.original.id, { currentRole: v })}
+        className="min-w-[110px] text-muted-foreground"
+      />
+    ),
   },
   {
     accessorKey: 'currentDepartment',
@@ -54,7 +75,13 @@ const columns: ColumnDef<LOAEmployeeWithRecord>[] = [
         Dept <ArrowUpDown className="ml-1 h-3 w-3" />
       </Button>
     ),
-    cell: ({ row }) => <span className="text-sm text-muted-foreground">{row.getValue('currentDepartment')}</span>,
+    cell: ({ row }) => (
+      <EditableCell
+        value={row.original.currentDepartment}
+        onSave={(v) => saveEmp(row.original.id, { currentDepartment: v })}
+        className="min-w-[90px] text-muted-foreground"
+      />
+    ),
   },
   {
     id: 'loaStart',
@@ -79,13 +106,19 @@ const columns: ColumnDef<LOAEmployeeWithRecord>[] = [
     cell: ({ row }) => {
       const d = row.original.loaRecord.expectedEndDate
       const overdue = row.original.isOverdue
-      if (!d) return <span className="text-xs text-muted-foreground">Not set</span>
-      const date = d instanceof Date ? d : new Date(d)
+      const display = d ? formatDate(d instanceof Date ? d : new Date(d)) : undefined
       return (
-        <span className={`text-sm tabular-nums flex items-center gap-1 ${overdue ? 'text-red-600 dark:text-red-400 font-semibold' : ''}`}>
-          {overdue && <AlertTriangle className="h-3 w-3 shrink-0" />}
-          {formatDate(date)}
-        </span>
+        <div className={`flex items-center gap-1 ${overdue ? 'text-red-600 dark:text-red-400' : ''}`}>
+          {overdue && <AlertTriangle className="h-3 w-3 shrink-0 text-red-600 dark:text-red-400" />}
+          <EditableCell
+            value={d}
+            display={display}
+            type="date"
+            emptyLabel="Not set"
+            onSave={(v) => saveLoa(row.original.loaRecord.id, { expectedEndDate: v || null })}
+            className={`min-w-[120px] tabular-nums ${overdue ? 'font-semibold' : ''}`}
+          />
+        </div>
       )
     },
     sortingFn: (a, b) => {
@@ -116,34 +149,47 @@ const columns: ColumnDef<LOAEmployeeWithRecord>[] = [
   {
     id: 'pcConfirmed',
     header: 'P&C Date',
-    cell: ({ row }) => {
-      const ok = row.original.loaRecord.pcEndDateConfirmed
-      return ok
-        ? <span className="inline-flex items-center gap-1 text-xs text-green-700 dark:text-green-400"><CheckCircle2 className="h-3.5 w-3.5" /> Confirmed</span>
-        : <span className="inline-flex items-center gap-1 text-xs text-yellow-700 dark:text-yellow-400"><Clock className="h-3.5 w-3.5" /> Pending</span>
-    },
+    cell: ({ row }) => (
+      <EditableToggle
+        value={!!row.original.loaRecord.pcEndDateConfirmed}
+        onToggle={(next) => saveLoa(row.original.loaRecord.id, { pcEndDateConfirmed: next })}
+        trueLabel="Confirmed"
+        falseLabel="Pending"
+        trueClass="bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300"
+        falseClass="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300"
+      />
+    ),
   },
   {
     id: 'jumpcloud',
     header: 'JumpCloud',
-    cell: ({ row }) => {
-      const suspended = row.original.loaRecord.jumpcloudSuspended
-      return suspended
-        ? <span className="inline-flex items-center gap-1 text-xs text-green-700 dark:text-green-400"><CheckCircle2 className="h-3.5 w-3.5" /> Suspended</span>
-        : <span className="inline-flex items-center gap-1 text-xs text-red-700 dark:text-red-400"><XCircle className="h-3.5 w-3.5" /> Not done</span>
-    },
+    cell: ({ row }) => (
+      <EditableToggle
+        value={!!row.original.loaRecord.jumpcloudSuspended}
+        onToggle={(next) => saveLoa(row.original.loaRecord.id, { jumpcloudSuspended: next })}
+        trueLabel="Suspended"
+        falseLabel="Not done"
+        trueClass="bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300"
+        falseClass="bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300"
+      />
+    ),
   },
   {
     id: 'notes',
     header: 'Notes',
-    cell: ({ row }) => {
-      const n = row.original.loaRecord.notes
-      return n
-        ? <span className="text-xs text-muted-foreground truncate max-w-[180px] block">{n}</span>
-        : <span className="text-muted-foreground text-xs">—</span>
-    },
+    cell: ({ row }) => (
+      <EditableCell
+        value={row.original.loaRecord.notes}
+        onSave={(v) => saveLoa(row.original.loaRecord.id, { notes: v || null })}
+        placeholder="Add notes…"
+        emptyLabel="—"
+        multiline
+        className="min-w-[160px] max-w-[220px] text-xs text-muted-foreground"
+      />
+    ),
   },
-]
+  ]
+}
 
 // ---------------------------------------------------------------------------
 // Quick filters
@@ -159,6 +205,8 @@ export function LOATable({ data }: { data: LOAEmployeeWithRecord[] }) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [globalFilter, setGlobalFilter] = useState('')
   const [activeFilter, setActiveFilter] = useState('all')
+
+  const columns = useMemo(() => buildColumns(), [])
 
   const table = useReactTable({
     data,

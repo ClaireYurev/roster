@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import {
   useReactTable,
   getCoreRowModel,
@@ -24,6 +24,8 @@ import Link from 'next/link'
 import { formatDate } from '@/lib/utils'
 import { ArrowUpDown, AlertTriangle, Clock, XCircle, CheckCircle2, HelpCircle } from 'lucide-react'
 import type { ContractorWithStatus } from '@/actions/contractors'
+import { EditableCell } from '@/components/shared/editable-cell'
+import { updateEmployeeProfile } from '@/actions/employees'
 
 // ---------------------------------------------------------------------------
 // Status badge
@@ -76,9 +78,16 @@ function daysLabel(days: number | null): string {
 }
 
 // ---------------------------------------------------------------------------
-// Columns
+// Columns (factory — defined inside component to access server actions)
 // ---------------------------------------------------------------------------
-const columns: ColumnDef<ContractorWithStatus>[] = [
+function buildColumns(): ColumnDef<ContractorWithStatus>[] {
+  function save(id: string, field: Parameters<typeof updateEmployeeProfile>[1]) {
+    return updateEmployeeProfile(id, field, 'MANUAL').then((r) =>
+      'error' in r ? { error: r.error as string } : undefined,
+    )
+  }
+
+  return [
   {
     accessorKey: 'currentName',
     header: ({ column }) => (
@@ -95,12 +104,24 @@ const columns: ColumnDef<ContractorWithStatus>[] = [
   {
     accessorKey: 'currentRole',
     header: 'Role',
-    cell: ({ row }) => <span className="text-sm text-muted-foreground">{row.getValue('currentRole')}</span>,
+    cell: ({ row }) => (
+      <EditableCell
+        value={row.original.currentRole}
+        onSave={(v) => save(row.original.id, { currentRole: v })}
+        className="min-w-[110px] text-muted-foreground"
+      />
+    ),
   },
   {
     accessorKey: 'currentDepartment',
     header: 'Dept',
-    cell: ({ row }) => <span className="text-sm text-muted-foreground">{row.getValue('currentDepartment')}</span>,
+    cell: ({ row }) => (
+      <EditableCell
+        value={row.original.currentDepartment}
+        onSave={(v) => save(row.original.id, { currentDepartment: v })}
+        className="min-w-[90px] text-muted-foreground"
+      />
+    ),
   },
   {
     accessorKey: 'contractEndDate',
@@ -109,14 +130,16 @@ const columns: ColumnDef<ContractorWithStatus>[] = [
         Contract End <ArrowUpDown className="ml-1 h-3 w-3" />
       </Button>
     ),
-    cell: ({ row }) => {
-      const d = row.original.contractEndDate
-      return d ? (
-        <span className="text-sm font-medium tabular-nums">{formatDate(d)}</span>
-      ) : (
-        <span className="text-xs text-muted-foreground">Not set</span>
-      )
-    },
+    cell: ({ row }) => (
+      <EditableCell
+        value={row.original.contractEndDate}
+        display={row.original.contractEndDate ? formatDate(row.original.contractEndDate) : undefined}
+        type="date"
+        emptyLabel="Not set"
+        onSave={(v) => save(row.original.id, { contractEndDate: v || undefined })}
+        className="min-w-[120px] font-medium tabular-nums"
+      />
+    ),
     sortingFn: (a, b) => {
       const da = a.original.contractEndDate
       const db = b.original.contractEndDate
@@ -186,7 +209,8 @@ const columns: ColumnDef<ContractorWithStatus>[] = [
       )
     },
   },
-]
+  ]
+}
 
 // ---------------------------------------------------------------------------
 // Quick filters
@@ -205,6 +229,8 @@ export function ContractorEndDatesTable({ data }: { data: ContractorWithStatus[]
   ])
   const [globalFilter, setGlobalFilter] = useState('')
   const [activeFilter, setActiveFilter] = useState('all')
+
+  const columns = useMemo(() => buildColumns(), [])
 
   const table = useReactTable({
     data,

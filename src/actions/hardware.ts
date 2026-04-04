@@ -190,3 +190,45 @@ export async function getAsset(id: string) {
     with: { employee: true },
   })
 }
+
+// ── Inline field update ─────────────────────────────────────────────────────
+
+export async function updateHardwareAsset(
+  assetId: string,
+  updates: {
+    systemName?: string
+    assetTag?: string
+    model?: string
+    description?: string
+    /** Dollar amount as a string, e.g. "1899.99" */
+    costDollars?: string
+    purchaseDate?: string
+    status?: 'UNASSIGNED' | 'ASSIGNED' | 'RETIRED'
+  }
+): Promise<{ success: true } | { error: string }> {
+  const asset = await db.query.hardwareAssets.findFirst({ where: eq(hardwareAssets.id, assetId) })
+  if (!asset) return { error: 'Asset not found' }
+
+  const set: Record<string, unknown> = { updatedAt: new Date() }
+
+  if (updates.systemName !== undefined) set.systemName = updates.systemName.trim()
+  if (updates.assetTag  !== undefined) set.assetTag  = updates.assetTag.trim()  || null
+  if (updates.model     !== undefined) set.model     = updates.model.trim()
+  if (updates.description !== undefined) set.description = updates.description.trim() || null
+  if (updates.costDollars !== undefined) {
+    const n = parseFloat(updates.costDollars)
+    set.cost = isNaN(n) ? null : dollarsToCents(n)
+  }
+  if (updates.purchaseDate !== undefined) set.purchaseDate = updates.purchaseDate ? new Date(updates.purchaseDate) : null
+  if (updates.status !== undefined) {
+    set.status = updates.status
+    // If retiring, unlink employee
+    if (updates.status === 'RETIRED') { set.employeeId = null; set.assignedDate = null }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await db.update(hardwareAssets).set(set as any).where(eq(hardwareAssets.id, assetId))
+  revalidatePath('/hardware')
+  revalidatePath('/hardware/monthly')
+  return { success: true }
+}

@@ -68,3 +68,30 @@ export async function getLOAEmployees(): Promise<LOAEmployeeWithRecord[]> {
 
   return results
 }
+
+// ── Inline field update ─────────────────────────────────────────────────────
+
+export async function updateLoaRecordDetails(
+  loaRecordId: number,
+  updates: {
+    expectedEndDate?: string | null
+    notes?: string | null
+    pcEndDateConfirmed?: boolean
+    jumpcloudSuspended?: boolean
+    jumpcloudActivated?: boolean
+  }
+): Promise<{ success: true } | { error: string }> {
+  const set: Record<string, unknown> = { updatedAt: new Date() }
+
+  if ('expectedEndDate' in updates) {
+    set.expectedEndDate = updates.expectedEndDate ? new Date(updates.expectedEndDate) : null
+  }
+  if ('notes' in updates) set.notes = updates.notes ?? null
+  if ('pcEndDateConfirmed' in updates) set.pcEndDateConfirmed = updates.pcEndDateConfirmed
+  if ('jumpcloudSuspended' in updates) set.jumpcloudSuspended = updates.jumpcloudSuspended
+  if ('jumpcloudActivated' in updates) set.jumpcloudActivated = updates.jumpcloudActivated
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await db.update(loaRecords).set(set as any).where(eq(loaRecords.id, loaRecordId))
+  return { success: true }
+}

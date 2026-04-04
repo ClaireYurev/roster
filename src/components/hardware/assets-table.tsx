@@ -21,6 +21,8 @@ import { formatCents, formatDate } from '@/lib/utils'
 import { HARDWARE_STATUS_LABELS, HARDWARE_STATUS_COLORS } from '@/lib/constants'
 import type { HardwareAsset, Employee } from '@/types'
 import { ChevronLeft, ChevronRight, ArrowUpDown } from 'lucide-react'
+import { EditableCell } from '@/components/shared/editable-cell'
+import { updateHardwareAsset } from '@/actions/hardware'
 
 type AssetWithEmployee = HardwareAsset & { employee?: Employee | null }
 
@@ -44,6 +46,12 @@ export function AssetsTable({
 
   const filteredData = statusFilter === 'all' ? assets : assets.filter((a) => a.status === statusFilter)
 
+  function save(id: string, updates: Parameters<typeof updateHardwareAsset>[1]) {
+    return updateHardwareAsset(id, updates).then((r) =>
+      'error' in r ? { error: r.error as string } : undefined,
+    )
+  }
+
   const columns: ColumnDef<AssetWithEmployee>[] = [
     {
       accessorKey: 'systemName',
@@ -52,27 +60,82 @@ export function AssetsTable({
           System Name <ArrowUpDown className="ml-1 h-3 w-3" />
         </Button>
       ),
-      cell: ({ row }) => <span className="font-mono font-medium text-sm">{row.original.systemName}</span>,
+      cell: ({ row }) => (
+        <EditableCell
+          value={row.original.systemName}
+          onSave={(v) => save(row.original.id, { systemName: v })}
+          className="min-w-[140px] font-mono font-medium"
+        />
+      ),
     },
-    { accessorKey: 'assetTag', header: 'Asset Tag', cell: ({ row }) => row.original.assetTag ?? <span className="text-muted-foreground">—</span> },
-    { accessorKey: 'model', header: 'Model' },
+    {
+      accessorKey: 'assetTag',
+      header: 'Asset Tag',
+      cell: ({ row }) => (
+        <EditableCell
+          value={row.original.assetTag}
+          onSave={(v) => save(row.original.id, { assetTag: v })}
+          placeholder="—"
+          emptyLabel="—"
+          className="min-w-[80px]"
+        />
+      ),
+    },
+    {
+      accessorKey: 'model',
+      header: 'Model',
+      cell: ({ row }) => (
+        <EditableCell
+          value={row.original.model}
+          onSave={(v) => save(row.original.id, { model: v })}
+          className="min-w-[120px]"
+        />
+      ),
+    },
     {
       accessorKey: 'cost',
       header: 'Cost',
-      cell: ({ row }) => <span className="text-sm">{formatCents(row.original.cost)}</span>,
+      cell: ({ row }) => (
+        <EditableCell
+          value={row.original.cost != null ? String(row.original.cost / 100) : null}
+          display={formatCents(row.original.cost)}
+          type="number"
+          placeholder="0.00"
+          emptyLabel="—"
+          onSave={(v) => save(row.original.id, { costDollars: v })}
+          className="min-w-[80px] tabular-nums"
+        />
+      ),
     },
     {
       accessorKey: 'purchaseDate',
       header: 'Purchased',
-      cell: ({ row }) => <span className="text-sm text-muted-foreground">{formatDate(row.original.purchaseDate)}</span>,
+      cell: ({ row }) => (
+        <EditableCell
+          value={row.original.purchaseDate}
+          display={formatDate(row.original.purchaseDate)}
+          type="date"
+          onSave={(v) => save(row.original.id, { purchaseDate: v })}
+          className="min-w-[110px] text-muted-foreground tabular-nums"
+        />
+      ),
     },
     {
       accessorKey: 'status',
       header: 'Status',
       cell: ({ row }) => (
-        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${HARDWARE_STATUS_COLORS[row.original.status]}`}>
-          {HARDWARE_STATUS_LABELS[row.original.status]}
-        </span>
+        <EditableCell
+          value={row.original.status}
+          type="select"
+          options={[
+            { value: 'UNASSIGNED', label: 'Unassigned' },
+            { value: 'ASSIGNED', label: 'Assigned' },
+            { value: 'RETIRED', label: 'Retired' },
+          ]}
+          onSave={(v) => save(row.original.id, { status: v as 'UNASSIGNED' | 'ASSIGNED' | 'RETIRED' })}
+          display={HARDWARE_STATUS_LABELS[row.original.status]}
+          className={`min-w-[90px] rounded-full px-2 py-0.5 text-xs font-medium ${HARDWARE_STATUS_COLORS[row.original.status]}`}
+        />
       ),
     },
     {
