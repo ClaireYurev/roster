@@ -3,21 +3,36 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import type { LucideIcon } from 'lucide-react'
+import {
+  LayoutDashboard,
+  CalendarDays,
+  ClipboardList,
+  PauseCircle,
+  UserX,
+  Monitor,
+  Upload,
+} from 'lucide-react'
 
-type NavLink = {
-  href: string
-  label: string
-  icon: LucideIcon
-}
+// Defined here (client component) so icon functions never cross the server/client boundary
+const NAV_LINKS = [
+  { href: '/dashboard',         label: 'Dashboard',   icon: LayoutDashboard },
+  { href: '/onboarding/weekly', label: 'Weekly',      icon: CalendarDays    },
+  { href: '/contractors',       label: 'Contractors', icon: ClipboardList   },
+  { href: '/loa',               label: 'LOA',         icon: PauseCircle     },
+  { href: '/offboarding',       label: 'Offboarding', icon: UserX           },
+  { href: '/hardware',          label: 'Hardware',    icon: Monitor         },
+  { href: '/admin/import',      label: 'Import',      icon: Upload          },
+]
 
-export function NavLinks({ links }: { links: NavLink[] }) {
+export function NavLinks() {
   const pathname = usePathname()
 
   return (
     <nav className="flex items-center gap-0.5">
-      {links.map(({ href, label, icon: Icon }) => {
-        const isActive = pathname === href || (href !== '/dashboard' && pathname.startsWith(href))
+      {NAV_LINKS.map(({ href, label, icon: Icon }) => {
+        const isActive =
+          pathname === href ||
+          (href !== '/dashboard' && pathname.startsWith(href))
         return (
           <Link
             key={href}

@@ -2,29 +2,9 @@ import Link from 'next/link'
 import { auth, signOut } from '@/auth'
 import { ThemeToggle } from './theme-toggle'
 import { NavLinks } from './nav-links'
-import {
-  Users,
-  CalendarDays,
-  Monitor,
-  Upload,
-  LayoutDashboard,
-  Terminal,
-  ClipboardList,
-  PauseCircle,
-  UserX,
-} from 'lucide-react'
+import { Users, Terminal } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-
-const navLinks = [
-  { href: '/dashboard',       label: 'Dashboard',   icon: LayoutDashboard },
-  { href: '/onboarding/weekly', label: 'Weekly',    icon: CalendarDays    },
-  { href: '/contractors',     label: 'Contractors', icon: ClipboardList   },
-  { href: '/loa',             label: 'LOA',         icon: PauseCircle     },
-  { href: '/offboarding',     label: 'Offboarding', icon: UserX           },
-  { href: '/hardware',        label: 'Hardware',    icon: Monitor         },
-  { href: '/admin/import',    label: 'Import',      icon: Upload          },
-]
 
 const devBypass = process.env.AUTH_DEV_BYPASS === 'true'
 
@@ -66,8 +46,8 @@ export async function Navbar() {
           {/* Divider */}
           <div className="h-5 w-px bg-border shrink-0" />
 
-          {/* Nav links — client component for active state */}
-          <NavLinks links={navLinks} />
+          {/* Nav links — client component (icons defined there to avoid server→client boundary) */}
+          <NavLinks />
 
           {/* Right side */}
           <div className="ml-auto flex items-center gap-1">
