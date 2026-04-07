@@ -192,28 +192,28 @@ const run = sqlite.transaction(() => {
     {
       system_name: 'LIV-501', asset_tag: 'LIV-501',
       model: 'MacBook Pro 14" M3', description: 'Space Gray, 16GB RAM, 512GB SSD',
-      cost: 1999.00, purchase_date: purchasedMonthsAgo(4),
+      cost: 159900, purchase_date: purchasedMonthsAgo(4), // $1,599
       status: 'ASSIGNED', employee_id: marcusId,
       assigned_date: purchasedMonthsAgo(4),
     },
     {
       system_name: 'LIV-502', asset_tag: 'LIV-502',
       model: 'MacBook Air 13" M2', description: 'Midnight, 8GB RAM, 256GB SSD',
-      cost: 1299.00, purchase_date: purchasedMonthsAgo(2),
+      cost: 99900, purchase_date: purchasedMonthsAgo(2), // $999
       status: 'ASSIGNED', employee_id: priId,
       assigned_date: purchasedMonthsAgo(2),
     },
     {
       system_name: 'LIV-503', asset_tag: 'LIV-503',
       model: 'MacBook Air 13" M2', description: 'Silver, 8GB RAM, 256GB SSD',
-      cost: 1299.00, purchase_date: purchasedMonthsAgo(2),
+      cost: 99900, purchase_date: purchasedMonthsAgo(2), // $999
       status: 'ASSIGNED', employee_id: tylerRomId,
       assigned_date: purchasedMonthsAgo(2),
     },
     {
       system_name: 'LIV-504', asset_tag: 'LIV-504',
       model: 'MacBook Air 13" M3', description: 'Starlight, 16GB RAM, 512GB SSD',
-      cost: 1499.00, purchase_date: purchasedMonthsAgo(1),
+      cost: 109900, purchase_date: purchasedMonthsAgo(1), // $1,099
       status: 'ASSIGNED', employee_id: amaraId,
       assigned_date: purchasedMonthsAgo(1),
     },
@@ -221,14 +221,14 @@ const run = sqlite.transaction(() => {
     {
       system_name: 'LIV-505', asset_tag: 'LIV-505',
       model: 'MacBook Pro 14" M3', description: 'Space Black, 18GB RAM, 512GB SSD — awaiting Jordan Park',
-      cost: 1999.00, purchase_date: purchasedMonthsAgo(0),
+      cost: 159900, purchase_date: purchasedMonthsAgo(0), // $1,599
       status: 'UNASSIGNED', employee_id: null,
       assigned_date: null,
     },
     {
       system_name: 'LIV-506', asset_tag: 'LIV-506',
       model: 'MacBook Air 13" M2', description: 'Silver, 8GB RAM, 256GB SSD — awaiting Nadia Volkov',
-      cost: 1099.00, purchase_date: purchasedMonthsAgo(0),
+      cost: 99900, purchase_date: purchasedMonthsAgo(0), // $999
       status: 'UNASSIGNED', employee_id: null,
       assigned_date: null,
     },
@@ -236,7 +236,7 @@ const run = sqlite.transaction(() => {
     {
       system_name: 'LIV-488', asset_tag: 'LIV-488',
       model: 'MacBook Pro 13" Intel', description: 'Previously assigned — retired due to age',
-      cost: 1299.00, purchase_date: purchasedMonthsAgo(36),
+      cost: 109900, purchase_date: purchasedMonthsAgo(36), // $1,099
       status: 'RETIRED', employee_id: null,
       assigned_date: null,
     },
