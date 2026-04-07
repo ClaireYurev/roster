@@ -63,3 +63,18 @@ export function getNextMondayAndWednesday(): { monday: Date; wednesday: Date } {
 
   return { monday, wednesday }
 }
+
+/** Get the Monday (ISO week start) of the week containing the given date */
+export function getMondayOfWeek(date: Date): Date {
+  const d = new Date(date)
+  d.setHours(0, 0, 0, 0)
+  const day = d.getDay() // 0=Sun...6=Sat
+  const diff = day === 0 ? -6 : 1 - day
+  d.setDate(d.getDate() + diff)
+  return d
+}
+
+/** Format a Date as YYYY-MM-DD for use in URL params */
+export function toISODate(date: Date): string {
+  return date.toISOString().slice(0, 10)
+}

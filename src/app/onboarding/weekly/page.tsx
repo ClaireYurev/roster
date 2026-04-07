@@ -1,27 +1,77 @@
 import { Navbar } from '@/components/layout/navbar'
 import { WeeklyOnboardingTable } from '@/components/onboarding/weekly-table'
-import { getWeeklyOnboardings } from '@/actions/lifecycle'
+import { WeekNavigator } from '@/components/onboarding/week-navigator'
+import { OnboardingCalendar } from '@/components/onboarding/onboarding-calendar'
+import { getWeeklyOnboardings, getOnboardingsCalendarData } from '@/actions/lifecycle'
 import { TreemapView } from '@/components/shared/treemap-view'
 import { ViewToggle } from '@/components/shared/view-toggle'
-import { computeDisplayName } from '@/lib/utils'
+import { computeDisplayName, getMondayOfWeek, toISODate } from '@/lib/utils'
 import { CalendarDays, CalendarCheck } from 'lucide-react'
-import { format } from 'date-fns'
+import { format, addDays, subMonths, addMonths } from 'date-fns'
 
 export const dynamic = 'force-dynamic'
 
 function formatDayHeader(date: Date): string {
-  return format(date, 'EEEE, MMMM d') // "Monday, April 7"
+  return format(date, 'EEEE, MMMM d')
+}
+
+/** Parse YYYY-MM-DD string → midnight Date, or null */
+function parseWeekParam(s: string | undefined): Date | null {
+  if (!s || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return null
+  const d = new Date(s + 'T00:00:00')
+  if (isNaN(d.getTime())) return null
+  // Snap to Monday in case someone passes a non-Monday
+  return getMondayOfWeek(d)
 }
 
 export default async function WeeklyOnboardingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string }>
+  searchParams: Promise<{ view?: string; week?: string }>
 }) {
-  const { view } = await searchParams
-  const isMap = view === 'map'
+  const { view, week } = await searchParams
+  const isMap      = view === 'map'
+  const isCalendar = view === 'calendar'
 
-  const { monday, wednesday, onboardings } = await getWeeklyOnboardings()
+  // Determine the "default" week (upcoming Mon with no ?week param)
+  const { monday: defaultMonday } = await getWeeklyOnboardings()
+  const defaultMondayISO = toISODate(defaultMonday)
+
+  // ── Calendar view ────────────────────────────────────────────────
+  if (isCalendar) {
+    // Fetch onboarding counts for a wide range: 3 months back to 6 months ahead
+    const rangeStart = subMonths(new Date(), 3)
+    const rangeEnd   = addMonths(new Date(), 6)
+    const calendarData = await getOnboardingsCalendarData(rangeStart, rangeEnd)
+
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Navbar />
+        <main className="flex-1 p-4 md:p-6 space-y-6 max-w-5xl mx-auto w-full">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h1 className="text-xl font-semibold flex items-center gap-2">
+                <CalendarDays className="h-5 w-5" />
+                Onboarding Calendar
+              </h1>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                Click any week to see the onboarding detail
+              </p>
+            </div>
+            <ViewToggle showCalendar />
+          </div>
+          <OnboardingCalendar
+            data={calendarData}
+            defaultWeek={defaultMondayISO}
+          />
+        </main>
+      </div>
+    )
+  }
+
+  // ── Table / Map views ────────────────────────────────────────────
+  const selectedMonday = parseWeekParam(week)
+  const { monday, wednesday, onboardings } = await getWeeklyOnboardings(selectedMonday ?? undefined)
 
   const mondayOnboardings = onboardings.filter((o) => {
     const d = new Date(o.event.eventDate as unknown as number)
@@ -35,12 +85,15 @@ export default async function WeeklyOnboardingPage({
 
   const hasAny = mondayOnboardings.length > 0 || wednesdayOnboardings.length > 0
 
+  // ── Map view ──────────────────────────────────────────────────────
   if (isMap) {
     const items = onboardings.map((o) => {
       const emp = o.employee
       const name = computeDisplayName(emp.preferredFirstName, emp.preferredLastName, emp.legalFirstName, emp.legalLastName, emp.currentName)
       const d = new Date(o.event.eventDate as unknown as number)
-      const dayLabel = d.toDateString() === monday.toDateString() ? `Mon ${format(monday, 'MMM d')}` : `Wed ${format(wednesday, 'MMM d')}`
+      const dayLabel = d.toDateString() === monday.toDateString()
+        ? `Mon ${format(monday, 'MMM d')}`
+        : `Wed ${format(wednesday, 'MMM d')}`
       const color = emp.employmentType === 'FTE' ? '#2563eb' : '#7c3aed'
       return {
         id: emp.id,
@@ -69,7 +122,14 @@ export default async function WeeklyOnboardingPage({
               </span>
             </div>
           </div>
-          <ViewToggle />
+          <div className="flex items-center gap-3">
+            <WeekNavigator
+              monday={monday}
+              wednesday={wednesday}
+              defaultMonday={defaultMondayISO}
+            />
+            <ViewToggle showCalendar />
+          </div>
         </div>
         <div className="flex-1 p-2 min-h-0">
           <TreemapView items={items} />
@@ -78,11 +138,12 @@ export default async function WeeklyOnboardingPage({
     )
   }
 
+  // ── Table view (default) ──────────────────────────────────────────
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
       <main className="flex-1 p-4 md:p-6 space-y-6 max-w-7xl mx-auto w-full">
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
             <h1 className="text-xl font-semibold flex items-center gap-2">
               <CalendarDays className="h-5 w-5" />
@@ -92,9 +153,17 @@ export default async function WeeklyOnboardingPage({
               Employees starting {formatDayHeader(monday)} or {formatDayHeader(wednesday)}
             </p>
           </div>
-          <ViewToggle />
+          <div className="flex items-center gap-2">
+            <WeekNavigator
+              monday={monday}
+              wednesday={wednesday}
+              defaultMonday={defaultMondayISO}
+            />
+            <ViewToggle showCalendar />
+          </div>
         </div>
 
+        {/* Stat cards */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <div className="rounded-lg border bg-card p-4 space-y-1">
             <p className="text-xs text-muted-foreground">Starting This Week</p>

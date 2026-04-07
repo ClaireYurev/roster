@@ -1,22 +1,26 @@
 'use client'
 
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
-import { LayoutGrid, Table2 } from 'lucide-react'
+import { LayoutGrid, Table2, CalendarDays } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
-export function ViewToggle() {
+type View = 'table' | 'map' | 'calendar'
+
+export function ViewToggle({ showCalendar = false }: { showCalendar?: boolean }) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const currentView = searchParams.get('view') ?? 'table'
+  const currentView = (searchParams.get('view') ?? 'table') as View
 
-  function setView(view: 'table' | 'map') {
+  function setView(view: View) {
     const params = new URLSearchParams(searchParams.toString())
     if (view === 'table') {
       params.delete('view')
     } else {
       params.set('view', view)
     }
+    // When switching to calendar, clear the week param
+    if (view === 'calendar') params.delete('week')
     const qs = params.toString()
     router.push(pathname + (qs ? `?${qs}` : ''))
   }
@@ -32,6 +36,17 @@ export function ViewToggle() {
         <Table2 className="h-3.5 w-3.5 mr-1" />
         Table
       </Button>
+      {showCalendar && (
+        <Button
+          variant={currentView === 'calendar' ? 'secondary' : 'ghost'}
+          size="sm"
+          className="h-7 px-2"
+          onClick={() => setView('calendar')}
+        >
+          <CalendarDays className="h-3.5 w-3.5 mr-1" />
+          Calendar
+        </Button>
+      )}
       <Button
         variant={currentView === 'map' ? 'secondary' : 'ghost'}
         size="sm"

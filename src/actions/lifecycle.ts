@@ -13,7 +13,7 @@ import {
   loaEndSchema,
 } from '@/lib/validators'
 import type { WeeklyOnboarding, LoaRecord } from '@/types'
-import { getNextMondayAndWednesday, computeDisplayName } from '@/lib/utils'
+import { getNextMondayAndWednesday, getMondayOfWeek, toISODate, computeDisplayName } from '@/lib/utils'
 import type { z } from 'zod'
 
 export async function logNameChange(input: z.infer<typeof nameChangeSchema>) {
@@ -291,14 +291,26 @@ export async function getActiveLOARecord(employeeId: string): Promise<LoaRecord 
 
 // ---------------------------------------------------------------------------
 // getWeeklyOnboardings — for the /onboarding/weekly view
-// Returns ONBOARDED + REHIRED events whose eventDate falls on next Mon or Wed
+// Returns ONBOARDED + REHIRED events whose eventDate falls on Mon or Wed of
+// the given week (monday). Defaults to the next upcoming Mon/Wed pair.
 // ---------------------------------------------------------------------------
-export async function getWeeklyOnboardings(): Promise<{
+export async function getWeeklyOnboardings(weekStart?: Date): Promise<{
   monday: Date
   wednesday: Date
   onboardings: WeeklyOnboarding[]
 }> {
-  const { monday, wednesday } = getNextMondayAndWednesday()
+  let monday: Date
+  let wednesday: Date
+
+  if (weekStart) {
+    monday = new Date(weekStart)
+    monday.setHours(0, 0, 0, 0)
+    wednesday = new Date(monday)
+    wednesday.setDate(monday.getDate() + 2)
+    wednesday.setHours(0, 0, 0, 0)
+  } else {
+    ;({ monday, wednesday } = getNextMondayAndWednesday())
+  }
 
   // Query window: from monday 00:00:00 to wednesday 23:59:59
   const windowStart = new Date(monday)
@@ -338,4 +350,36 @@ export async function getWeeklyOnboardings(): Promise<{
   )
 
   return { monday, wednesday, onboardings }
+}
+
+// ---------------------------------------------------------------------------
+// getOnboardingsCalendarData — returns per-date onboarding counts for a range
+// Used by the calendar overview to show onboarding density across weeks
+// ---------------------------------------------------------------------------
+export async function getOnboardingsCalendarData(
+  rangeStart: Date,
+  rangeEnd: Date,
+): Promise<{ date: string; count: number }[]> {
+  const start = new Date(rangeStart); start.setHours(0, 0, 0, 0)
+  const end   = new Date(rangeEnd);   end.setHours(23, 59, 59, 999)
+
+  const events = await db.query.lifecycleEvents.findMany({
+    where: and(
+      or(
+        eq(lifecycleEvents.eventType, 'ONBOARDED'),
+        eq(lifecycleEvents.eventType, 'REHIRED')
+      ),
+      gte(lifecycleEvents.eventDate, start),
+      lte(lifecycleEvents.eventDate, end)
+    ),
+  })
+
+  const counts: Record<string, number> = {}
+  for (const ev of events) {
+    const d = new Date(ev.eventDate as unknown as number)
+    const key = toISODate(d)
+    counts[key] = (counts[key] ?? 0) + 1
+  }
+
+  return Object.entries(counts).map(([date, count]) => ({ date, count }))
 }
