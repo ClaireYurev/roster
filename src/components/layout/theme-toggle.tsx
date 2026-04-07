@@ -1,6 +1,7 @@
 'use client'
 
 import { useTheme } from 'next-themes'
+import { useState, useEffect } from 'react'
 import { Palette, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -54,7 +55,12 @@ function Swatch({ colors }: { colors: [string, string, string] }) {
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme()
-  const current = THEMES.find((t) => t.id === theme)
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+
+  // Before mount, theme is unknown — avoid hydration mismatch by always
+  // rendering the palette icon (same as server-side output).
+  const current = mounted ? THEMES.find((t) => t.id === theme) : undefined
 
   return (
     <DropdownMenu>
